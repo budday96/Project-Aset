@@ -1,8 +1,6 @@
 <?= $this->extend('layout/superadmin_template/index'); ?>
 <?= $this->section('content'); ?>
 
-<h5 class="mb-3"><?= esc($title ?? 'Tambah Master Aset'); ?></h5>
-
 <?php if (session('error')): ?>
     <div class="alert alert-danger"><?= esc(session('error')) ?></div>
 <?php endif; ?>
@@ -29,9 +27,9 @@
                     </div>
                 </div>
 
-                <!-- Expired Default -->
-                <div class="col-md-3">
-                    <label class="form-label">Expired Default</label>
+                <!-- Expired -->
+                <div class="col-md-6">
+                    <label class="form-label">Expired</label>
                     <input type="date"
                         name="expired_default"
                         class="form-control <?= session('errors.expired_default') ? 'is-invalid' : '' ?>"
@@ -43,7 +41,7 @@
 
                 <!-- Nilai Perolehan Default (Rupiah visible + hidden raw) -->
                 <div class="col-md-6">
-                    <label class="form-label">Nilai Perolehan (Default)</label>
+                    <label class="form-label">Nilai Perolehan</label>
                     <input id="nilai_perolehan_default_fmt" type="text" inputmode="numeric"
                         class="form-control <?= session('errors.nilai_perolehan_default') ? 'is-invalid' : '' ?>"
                         value="">
@@ -56,7 +54,7 @@
 
                 <!-- Periode (month) -->
                 <div class="col-md-6">
-                    <label class="form-label">Bulan–Tahun Perolehan (Default)</label>
+                    <label class="form-label">Bulan–Tahun Perolehan</label>
                     <input type="month"
                         name="periode_perolehan_default_month"
                         class="form-control <?= session('errors.periode_perolehan_default_month') ? 'is-invalid' : '' ?>"
@@ -65,6 +63,25 @@
                         <?= session('errors.periode_perolehan_default_month') ?: 'Format harus YYYY-MM.' ?>
                     </div>
                 </div>
+
+                <!-- Kelompok Harta -->
+                <div class="col-md-12">
+                    <label class="form-label">Kelompok Harta *</label>
+                    <select name="id_kelompok_harta"
+                        class="form-select <?= session('errors.id_kelompok_harta') ? 'is-invalid' : '' ?>" required>
+                        <option value="" disabled <?= old('id_kelompok_harta') ? '' : 'selected' ?>>-- Pilih --</option>
+                        <?php foreach ($kelompokHarta as $kh): ?>
+                            <option value="<?= $kh['id_kelompok_harta'] ?>"
+                                <?= (string)old('id_kelompok_harta') === (string)$kh['id_kelompok_harta'] ? 'selected' : '' ?>>
+                                <?= esc($kh['kode_kelompok'] . ' - ' . $kh['nama_kelompok']) ?>
+                            </option>
+                        <?php endforeach ?>
+                    </select>
+                    <div class="invalid-feedback">
+                        <?= session('errors.id_kelompok_harta') ?: 'Silakan pilih kelompok harta.' ?>
+                    </div>
+                </div>
+
 
                 <!-- Kategori -->
                 <div class="col-md-6">
@@ -99,7 +116,6 @@
                 <!-- Default atribut -->
                 <div class="col-12">
                     <hr>
-                    <h6 class="mb-2">Default Atribut (ikut Subkategori)</h6>
                     <div class="row g-3" id="attr-box">
                         <div class="col-12 text-muted">Pilih subkategori untuk memuat atribut.</div>
                     </div>

@@ -3,14 +3,14 @@
 namespace App\Controllers\Superadmin;
 
 use App\Controllers\BaseController;
-use App\Models\SubkategoriModel;
+use App\Models\SubkategoriAsetModel;
 use App\Models\AtributModel;
 
 class AsetAjax extends BaseController
 {
     public function subkategoriByKategori($idKategori)
     {
-        $rows = (new SubkategoriModel())
+        $rows = (new SubkategoriAsetModel())
             ->where('id_kategori', (int)$idKategori)
             ->orderBy('nama_subkategori', 'ASC')
             ->findAll();

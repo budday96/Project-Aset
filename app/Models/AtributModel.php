@@ -22,6 +22,9 @@ class AtributModel extends Model
     ];
     protected $useTimestamps = true;
 
+    protected $useSoftDeletes = true;
+    protected $deletedField   = 'deleted_at';
+
     public function bySubkategori(int $idSub): array
     {
         return $this->where('id_subkategori', $idSub)->orderBy('urutan', 'ASC')->findAll();

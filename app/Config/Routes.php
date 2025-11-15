@@ -13,20 +13,11 @@ $routes->get('/', 'Home::index');
 
 $routes->group('superadmin', ['filter' => 'role:superadmin'], function ($routes) {
 
+    $routes->get('aset/getMasterAset', 'Superadmin\Aset::getMasterAset');
+    $routes->get('aset/detailMaster/(:num)', 'Superadmin\Aset::detailMaster/$1');
+
+
     $routes->get('superadmin/aset/qr/(:num)', 'Barcode::qr/$1');
-
-
-    // AJAX
-    $routes->get('subkategori/by-kategori/(:num)', 'Superadmin\AsetAjax::subkategoriByKategori/$1');
-    $routes->get('atribut/by-subkategori/(:num)',  'Superadmin\AsetAjax::atributBySubkategori/$1');
-
-    // CRUD Subkategori
-    $routes->get('subkategori',                'Superadmin\Subkategori::index');
-    $routes->get('subkategori/create',         'Superadmin\Subkategori::create');
-    $routes->post('subkategori/store',         'Superadmin\Subkategori::store');
-    $routes->get('subkategori/(:num)/edit',    'Superadmin\Subkategori::edit/$1');
-    $routes->post('subkategori/(:num)/update', 'Superadmin\Subkategori::update/$1');
-    $routes->post('subkategori/(:num)/delete', 'Superadmin\Subkategori::delete/$1');
 
     // CRUD Atribut
     $routes->get('atribut/(:num)',         'Superadmin\Atribut::index/$1');   // $1=id_subkategori
@@ -61,21 +52,42 @@ $routes->group('superadmin', ['filter' => 'role:superadmin'], function ($routes)
 
     // Kelola Cabang
     $routes->get('cabang', 'Superadmin\Cabang::index');
+    $routes->get('cabang/trash', 'Superadmin\Cabang::trash');
     $routes->get('cabang/create', 'Superadmin\Cabang::create');
     $routes->post('cabang/store', 'Superadmin\Cabang::store');
     $routes->get('cabang/edit', 'Superadmin\Cabang::edit');
     $routes->get('cabang/edit/(:num)', 'Superadmin\Cabang::edit/$1');
     $routes->post('cabang/update/(:num)', 'Superadmin\Cabang::update/$1');
     $routes->post('cabang/delete/(:num)', 'Superadmin\Cabang::delete/$1');
+    $routes->get('cabang/restore/(:num)', 'Superadmin\Cabang::restore/$1');
+    $routes->get('cabang/purge/(:num)',   'Superadmin\Cabang::purge/$1');
 
     // Kelola Kategori
     $routes->get('kategori', 'Superadmin\KategoriAset::index');
+    $routes->get('kategori/trash', 'Superadmin\KategoriAset::trash');
     $routes->get('kategori/create', 'Superadmin\KategoriAset::create');
     $routes->post('kategori/store', 'Superadmin\KategoriAset::store');
     $routes->get('kategori/edit', 'Superadmin\KategoriAset::edit');
     $routes->get('kategori/edit/(:num)', 'Superadmin\KategoriAset::edit/$1');
     $routes->post('kategori/update/(:num)', 'Superadmin\KategoriAset::update/$1');
     $routes->post('kategori/delete/(:num)', 'Superadmin\KategoriAset::delete/$1');
+    $routes->get('kategori/restore/(:num)', 'Superadmin\KategoriAset::restore/$1');
+    $routes->get('kategori/purge/(:num)',   'Superadmin\KategoriAset::purge/$1');
+
+    // AJAX
+    $routes->get('subkategori/by-kategori/(:num)', 'Superadmin\AsetAjax::subkategoriByKategori/$1');
+    $routes->get('atribut/by-subkategori/(:num)',  'Superadmin\AsetAjax::atributBySubkategori/$1');
+
+    // CRUD Subkategori
+    $routes->get('subkategori',                'Superadmin\Subkategori::index');
+    $routes->get('subkategori/trash',          'Superadmin\Subkategori::trash');
+    $routes->get('subkategori/create',         'Superadmin\Subkategori::create');
+    $routes->post('subkategori/store',         'Superadmin\Subkategori::store');
+    $routes->get('subkategori/(:num)/edit',    'Superadmin\Subkategori::edit/$1');
+    $routes->post('subkategori/(:num)/update', 'Superadmin\Subkategori::update/$1');
+    $routes->post('subkategori/(:num)/delete', 'Superadmin\Subkategori::delete/$1');
+    $routes->get('subkategori/restore/(:num)', 'Superadmin\Subkategori::restore/$1');
+    $routes->get('subkategori/purge/(:num)',   'Superadmin\Subkategori::purge/$1');
 
     // Kelola Aset
     $routes->get('aset', 'Superadmin\Aset::index');
@@ -85,6 +97,17 @@ $routes->group('superadmin', ['filter' => 'role:superadmin'], function ($routes)
     $routes->post('aset/update/(:num)', 'Superadmin\Aset::update/$1');
     $routes->get('aset/detail/(:num)', 'Superadmin\Aset::detail/$1');
     $routes->post('aset/delete/(:num)', 'Superadmin\Aset::delete/$1');
+
+    // Kelompok Harta
+    $routes->get('kelompokharta', 'Superadmin\KelompokHarta::index');
+    $routes->get('kelompokharta/create', 'Superadmin\KelompokHarta::create');
+    $routes->post('kelompokharta/store', 'Superadmin\KelompokHarta::store');
+    $routes->get('kelompokharta/edit/(:num)', 'Superadmin\KelompokHarta::edit/$1');
+    $routes->post('kelompokharta/update/(:num)', 'Superadmin\KelompokHarta::update/$1');
+    $routes->get('kelompokharta/delete/(:num)', 'Superadmin\KelompokHarta::delete/$1');
+
+    // Penyusutan Aset
+    $routes->get('penyusutan-aset', 'Superadmin\PenyusutanAset::index');
 
     // Arsip aset
     $routes->get('aset/trash', 'Superadmin\Aset::trash');

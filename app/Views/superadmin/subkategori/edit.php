@@ -7,13 +7,9 @@
             <?= csrf_field() ?>
             <div class="col-md-6">
                 <label class="form-label">Kategori *</label>
-                <select name="id_kategori" class="form-select" required>
-                    <?php foreach ($kategoris as $k): ?>
-                        <option value="<?= $k['id_kategori'] ?>" <?= $row['id_kategori'] == $k['id_kategori'] ? 'selected' : '' ?>>
-                            <?= esc($k['nama_kategori']) ?>
-                        </option>
-                    <?php endforeach ?>
-                </select>
+                <input type="text" class="form-control" value="<?= esc($kategoriNama) ?>" readonly>
+                <!-- kirim nilai aslinya lewat hidden -->
+                <input type="hidden" name="id_kategori" value="<?= (int)$row['id_kategori'] ?>">
             </div>
             <div class="col-md-6">
                 <label class="form-label">Nama Subkategori *</label>

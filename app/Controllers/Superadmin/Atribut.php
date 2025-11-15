@@ -4,13 +4,13 @@ namespace App\Controllers\Superadmin;
 
 use App\Controllers\BaseController;
 use App\Models\AtributModel;
-use App\Models\SubkategoriModel;
+use App\Models\SubkategoriAsetModel;
 
 class Atribut extends BaseController
 {
     public function index($idSub)
     {
-        $sub = (new SubkategoriModel())->find((int)$idSub);
+        $sub = (new SubkategoriAsetModel())->find((int)$idSub);
         if (!$sub) return redirect()->back()->with('error', 'Subkategori tidak ditemukan');
 
         return view('superadmin/atribut/index', [
@@ -22,7 +22,7 @@ class Atribut extends BaseController
 
     public function create($idSub)
     {
-        $sub = (new SubkategoriModel())->find((int)$idSub);
+        $sub = (new SubkategoriAsetModel())->find((int)$idSub);
         if (!$sub) return redirect()->back()->with('error', 'Subkategori tidak ditemukan');
 
         return view('superadmin/atribut/create', [
@@ -70,7 +70,7 @@ class Atribut extends BaseController
         $row = $m->find((int)$idAtribut);
         if (!$row) return redirect()->back()->with('error', 'Data tidak ditemukan');
 
-        $sub = (new SubkategoriModel())->find((int)$row['id_subkategori']);
+        $sub = (new SubkategoriAsetModel())->find((int)$row['id_subkategori']);
 
         return view('superadmin/atribut/edit', [
             'title'        => 'Edit Atribut',

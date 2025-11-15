@@ -21,27 +21,24 @@
 
             <div class="row g-3">
 
-                <!-- Master -->
+                <!-- Master (READ ONLY) -->
                 <div class="col-12">
-                    <label class="form-label">Nama Aset (Master) *</label>
-                    <select id="id_master_aset" name="id_master_aset"
-                        class="form-select <?= session('errors.id_master_aset') ? 'is-invalid' : '' ?>" required>
-                        <?php if (empty($row['id_master_aset'])): ?>
-                            <option value="" disabled selected>-- Pilih Nama Aset (Master) --</option>
-                        <?php endif; ?>
-                        <?php
-                        $selected = (string)old('id_master_aset', $row['id_master_aset'] ?? '');
-                        foreach ($masters as $m):
-                        ?>
-                            <option value="<?= $m['id_master_aset'] ?>" <?= $selected === (string)$m['id_master_aset'] ? 'selected' : '' ?>>
-                                <?= esc($m['nama_master']) ?> (<?= esc($m['nama_kategori'] ?? '-') ?>/<?= esc($m['nama_subkategori'] ?? '-') ?>)
-                            </option>
-                        <?php endforeach; ?>
+                    <label class="form-label">Nama Aset (Master)</label>
+
+                    <!-- HIDDEN INPUT agar tetap terkirim ke controller -->
+                    <input type="hidden" name="id_master_aset" value="<?= $row['id_master_aset'] ?>">
+
+                    <!-- SELECT DISABLED (tetap punya ID agar JS tetap bekerja) -->
+                    <select id="id_master_aset" class="form-select" disabled>
+                        <option value="<?= $row['id_master_aset'] ?>">
+                            <?= esc($row['nama_master']) ?>
+                            (<?= esc($row['nama_kategori'] ?? '-') ?>/<?= esc($row['nama_subkategori'] ?? '-') ?>)
+                        </option>
                     </select>
-                    <div class="invalid-feedback">
-                        <?= session('errors.id_master_aset') ?: 'Silakan pilih nama aset dari master.' ?>
-                    </div>
+
+                    <small class="text-muted">Master aset tidak dapat diubah.</small>
                 </div>
+
 
                 <!-- Display-only -->
                 <div class="col-md-6">
@@ -53,17 +50,13 @@
                     <div id="nama_subkategori" class="form-control-plaintext border rounded px-2 py-2 bg-light">—</div>
                 </div>
 
-                <div class="col-md-4">
+                <div class="col-md-6">
                     <label class="form-label">Nilai Perolehan</label>
                     <div id="master_nilai" class="form-control-plaintext border rounded px-2 py-2 bg-light">—</div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-6">
                     <label class="form-label">Bulan–Tahun Perolehan</label>
                     <div id="master_periode" class="form-control-plaintext border rounded px-2 py-2 bg-light">—</div>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">Expired/Kadaluarsa</label>
-                    <div id="master_expired" class="form-control-plaintext border rounded px-2 py-2 bg-light">—</div>
                 </div>
 
                 <!-- Cabang -->
@@ -156,7 +149,9 @@
         </form>
     </div>
 </div>
+<?= $this->endSection(); ?>
 
+<?= $this->section('scripts'); ?>
 <script>
     (() => {
         const BASE = '<?= base_url() ?>';
@@ -165,7 +160,6 @@
         const nmSub = document.getElementById('nama_subkategori');
         const masterNilai = document.getElementById('master_nilai');
         const masterPeriode = document.getElementById('master_periode');
-        const masterExpired = document.getElementById('master_expired');
         const fieldsBox = document.getElementById('dynamic-fields');
 
         function formatIDR(n) {
@@ -243,7 +237,6 @@
                 setText(nmSub, js.nama_subkategori ?? '—');
                 setText(masterNilai, formatIDR(js.nilai_default));
                 setText(masterPeriode, js.periode_default ? js.periode_default.slice(0, 7) : '—');
-                setText(masterExpired, js.expired_default ?? '—');
 
                 renderAtribut(js.atribut);
             } catch (e) {
@@ -253,7 +246,6 @@
                 setText(nmSub, '');
                 setText(masterNilai, '');
                 setText(masterPeriode, '');
-                setText(masterExpired, '');
             }
         }
 
@@ -266,9 +258,8 @@
             if (current) loadMasterDetail(current);
         });
     })();
-</script>
 
-<script>
+    // 
     (() => {
         'use strict';
         const forms = document.querySelectorAll('.needs-validation');
@@ -283,5 +274,4 @@
         });
     })();
 </script>
-
 <?= $this->endSection(); ?>

@@ -14,83 +14,172 @@ class Cabang extends BaseController
         $this->cabangModel = new CabangModel();
     }
 
-    // List semua cabang
+    // ==== LIST AKTIF ====
     public function index()
     {
-        $data['title'] = 'Daftar Cabang';
-        $data['cabangs'] = $this->cabangModel->orderBy('id_cabang', 'DESC')->findAll();
+        $data = [
+            'title'   => 'Daftar Cabang',
+            'cabangs' => $this->cabangModel->orderBy('id_cabang', 'DESC')->findAll(), // soft delete -> otomatis aktif saja
+        ];
         return view('superadmin/cabang/index', $data);
     }
 
-    // Tampilkan form tambah
-    public function create()
+    // ==== LIST ARSIP ====
+    public function trash()
     {
-
-        $data['title'] = 'Tambah Cabang';
-        return view('superadmin/cabang/create', $data);
+        $data = [
+            'title'   => 'Arsip Cabang',
+            'cabangs' => $this->cabangModel->onlyDeleted()->orderBy('deleted_at', 'DESC')->findAll(),
+        ];
+        return view('superadmin/cabang/trash', $data);
     }
 
-    // Simpan data cabang baru
+    // ==== CREATE ====
+    public function create()
+    {
+        return view('superadmin/cabang/create', ['title' => 'Tambah Cabang']);
+    }
+
     public function store()
     {
-
         $rules = [
-            'kode_cabang' => 'required|is_unique[cabang.kode_cabang]',
+            'kode_cabang' => 'required',
             'nama_cabang' => 'required',
             'alamat'      => 'required',
         ];
-
-        if (!$this->validate($rules)) {
+        if (! $this->validate($rules)) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
+        // Cek unik kode (hanya terhadap baris yang belum dihapus)
+        $exists = $this->cabangModel
+            ->where('kode_cabang', trim((string)$this->request->getPost('kode_cabang')))
+            ->where('deleted_at', null)
+            ->first();
+        if ($exists) {
+            return redirect()->back()->withInput()->with('error', 'Kode cabang sudah dipakai.');
+        }
+
         $this->cabangModel->insert([
-            'kode_cabang' => $this->request->getPost('kode_cabang'),
-            'nama_cabang' => $this->request->getPost('nama_cabang'),
-            'alamat'      => $this->request->getPost('alamat'),
+            'kode_cabang' => trim((string)$this->request->getPost('kode_cabang')),
+            'nama_cabang' => trim((string)$this->request->getPost('nama_cabang')),
+            'alamat'      => trim((string)$this->request->getPost('alamat')),
         ]);
+
         return redirect()->to('/superadmin/cabang')->with('success', 'Cabang berhasil ditambahkan!');
     }
 
-    // Form edit cabang
+    // ==== UPDATE ====
     public function edit($id = null)
     {
         if (empty($id)) {
             return redirect()->to('/superadmin/cabang')->with('error', 'Parameter tidak valid');
         }
-
-        $data['title'] = 'Edit Cabang';
-        $data['cabang'] = $this->cabangModel->find($id);
-        if (!$data['cabang']) return redirect()->to('/superadmin/cabang')->with('error', 'Data tidak ditemukan.');
-        return view('superadmin/cabang/edit', $data);
+        $row = $this->cabangModel->withDeleted()->find((int)$id);
+        if (! $row) {
+            return redirect()->to('/superadmin/cabang')->with('error', 'Data tidak ditemukan.');
+        }
+        return view('superadmin/cabang/edit', ['title' => 'Edit Cabang', 'cabang' => $row]);
     }
 
-    // Update data cabang
     public function update($id)
     {
-
         $rules = [
-            'kode_cabang' => "required|is_unique[cabang.kode_cabang,id_cabang,{$id}]",
+            'kode_cabang' => 'required',
             'nama_cabang' => 'required',
             'alamat'      => 'required',
         ];
-
-        if (!$this->validate($rules)) {
+        if (! $this->validate($rules)) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
-        $this->cabangModel->update($id, [
-            'kode_cabang' => $this->request->getPost('kode_cabang'),
-            'nama_cabang' => $this->request->getPost('nama_cabang'),
-            'alamat'      => $this->request->getPost('alamat'),
+        // Cek unik kode untuk baris aktif lain (abaikan dirinya & baris ter-arsip)
+        $kode = trim((string)$this->request->getPost('kode_cabang'));
+        $exists = $this->cabangModel
+            ->where('kode_cabang', $kode)
+            ->where('id_cabang !=', (int)$id)
+            ->where('deleted_at', null)
+            ->first();
+        if ($exists) {
+            return redirect()->back()->withInput()->with('error', 'Kode cabang sudah dipakai cabang lain.');
+        }
+
+        $this->cabangModel->update((int)$id, [
+            'kode_cabang' => $kode,
+            'nama_cabang' => trim((string)$this->request->getPost('nama_cabang')),
+            'alamat'      => trim((string)$this->request->getPost('alamat')),
         ]);
+
         return redirect()->to('/superadmin/cabang')->with('success', 'Cabang berhasil diupdate!');
     }
 
-    // Hapus cabang
+    // ==== SOFT DELETE ====
     public function delete($id)
     {
-        $this->cabangModel->delete($id);
-        return redirect()->to('/superadmin/cabang')->with('success', 'Cabang berhasil dihapus!');
+        $db = \Config\Database::connect();
+
+        // Cek apakah cabang masih dipakai aset aktif
+        $dipakai = (int) $db->table('aset')
+            ->where('id_cabang', (int)$id)
+            ->where('deleted_at', null)
+            ->countAllResults();
+        if ($dipakai > 0) {
+            return redirect()
+                ->back()
+                ->with('error', "Cabang tidak bisa dihapus karena masih dipakai oleh {$dipakai} aset aktif.");
+        }
+
+        // Cek apakah masih ada mutasi yang melibatkan cabang ini
+        $mutasi = (int) $db->table('mutasi_aset')
+            ->groupStart()
+            ->where('dari_cabang', (int)$id)
+            ->orWhere('ke_cabang', (int)$id)
+            ->groupEnd()
+            ->countAllResults();
+        if ($mutasi > 0) {
+            return redirect()
+                ->back()
+                ->with('error', "Cabang tidak bisa dihapus karena masih tercatat di {$mutasi} riwayat mutasi aset.");
+        }
+
+        // Jika aman → soft delete
+        $this->cabangModel->delete((int)$id);
+        return redirect()
+            ->to('/superadmin/cabang')
+            ->with('success', 'Cabang berhasil diarsipkan.');
+    }
+
+
+    // ==== RESTORE (pulihkan dari arsip) ====
+    public function restore($id)
+    {
+        $ok = $this->cabangModel->withDeleted()->update((int)$id, ['deleted_at' => null]);
+        return $ok
+            ? redirect()->to('/superadmin/cabang/trash')->with('success', 'Cabang dipulihkan.')
+            : redirect()->back()->with('error', 'Gagal memulihkan cabang.');
+    }
+
+    // ==== PURGE (hapus permanen) ====
+    public function purge($id)
+    {
+        $db = \Config\Database::connect();
+
+        // Guard: tolak jika masih dirujuk aset (bahkan yang terarsip, supaya aman)
+        $refAset = (int) $db->table('aset')->where('id_cabang', (int)$id)->countAllResults();
+        if ($refAset > 0) {
+            return redirect()->back()->with('error', "Tidak bisa hapus permanen: masih dirujuk {$refAset} aset.");
+        }
+
+        // Guard: tolak jika masih dirujuk mutasi
+        $refMutasi = (int) $db->table('mutasi_aset')
+            ->groupStart()->where('dari_cabang', (int)$id)->orWhere('ke_cabang', (int)$id)->groupEnd()
+            ->countAllResults();
+        if ($refMutasi > 0) {
+            return redirect()->back()->with('error', "Tidak bisa hapus permanen: masih ada {$refMutasi} riwayat mutasi.");
+        }
+
+        // Hard delete
+        $this->cabangModel->delete((int)$id, true);
+        return redirect()->to('/superadmin/cabang/trash')->with('success', 'Cabang dihapus permanen.');
     }
 }

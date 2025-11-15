@@ -59,7 +59,7 @@
 
         <div class="card border-0 shadow-sm">
             <div class="table-responsive">
-                <table id="example" class="table table-sm align-middle mb-0">
+                <table id="mytable" class="table table-sm align-middle mb-0">
                     <thead class="table-light">
                         <tr>
                             <th style="width: 110px;">Waktu</th>

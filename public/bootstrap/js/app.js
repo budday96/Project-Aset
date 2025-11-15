@@ -75,3 +75,50 @@ function closeAllSubMenus(){
     }
   });
 })();
+
+// DataTable: hanya jika #mytable ada di halaman
+document.addEventListener('DOMContentLoaded', function() {
+
+    // Bootstrap tooltip
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function(el) {
+        return new bootstrap.Tooltip(el);
+    });
+});
+
+$(document).ready(function () {
+
+    // Cek apakah ada tabel dengan class ini
+    if ($('.datatable-myasset').length) {
+
+        $('.datatable-myasset').DataTable({
+            responsive: true,
+            autoWidth: false,
+
+            dom: '<"row mb-3"' +
+                    '<"col-sm-6 d-flex align-items-center"l>' +
+                    '<"col-sm-6 d-flex align-items-center justify-content-end"f>' +
+                '>' +
+                'rt' +
+                '<"row mt-3"' +
+                    '<"col-sm-6"i>' +
+                    '<"col-sm-6 d-flex justify-content-end"p>' +
+                '>',
+
+            // Tambahkan opsi default disini
+            pageLength: 10,
+            language: {
+                search: "Cari:",
+                lengthMenu: "Tampilkan _MENU_ data",
+                zeroRecords: "Tidak ada data",
+                info: "Menampilkan _START_ - _END_ dari _TOTAL_ data",
+                paginate: {
+                    previous: "‹",
+                    next: "›"
+                }
+            }
+        });
+
+    }
+});
+

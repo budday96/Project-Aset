@@ -9,15 +9,21 @@ class AsetModel extends Model
     protected $table      = 'aset';
     protected $primaryKey = 'id_aset';
     protected $returnType = 'array';
+    protected $useTimestamps = true;
+    protected $useSoftDeletes = true;
+    protected $deletedField   = 'deleted_at';
 
     protected $allowedFields = [
         'kode_aset',
         'qr_token',
         'id_master_aset',
-        // 'nama_aset',
         'id_kategori',
         'id_subkategori',
         'id_cabang',
+        'id_kelompok_harta',
+        'metode_penyusutan',
+        'umur_ekonomis_bulan',
+        'tanggal_mulai_susut',
         'nilai_perolehan',
         'periode_perolehan',
         'stock',
@@ -34,9 +40,12 @@ class AsetModel extends Model
         'deleted_at',
         'deleted_by'
     ];
-    protected $useTimestamps = true;
 
-    // Soft delete
-    protected $useSoftDeletes = true;
-    protected $deletedField   = 'deleted_at';
+    /** Relasi join dengan kelompok */
+    public function withJoin()
+    {
+        return $this->select('aset.*, kelompok_harta.nama_kelompok, kelompok_harta.umur_tahun, kelompok_harta.tarif_persen_th, cabang.nama_cabang')
+            ->join('kelompok_harta', 'kelompok_harta.id_kelompok_harta = aset.id_kelompok_harta', 'left')
+            ->join('cabang', 'cabang.id_cabang = aset.id_cabang', 'left');
+    }
 }

@@ -4,49 +4,126 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= $title ?? 'My asset' ?></title>
+    <title><?= $title ?? 'MyAsset' ?></title>
+
+    <link rel="icon" type="image/png" href="<?= base_url(); ?>/img/favicon.png">
+
+    <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="<?= base_url(); ?>/bootstrap/css/bootstrap.min.css">
-    <link rel="stylesheet" href="<?= base_url(); ?>/bootstrap/css/dataTables.bootstrap5.css">
+
+    <!-- DataTables Bootstrap 5 -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
+
+    <!-- DataTables Buttons -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css">
+
+    <!-- Select2 + Bootstrap 5 Theme -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+
+    <!-- Custom CSS -->
     <link rel="stylesheet" href="<?= base_url(); ?>/bootstrap/css/style.css">
+
+    <!-- Section CSS -->
+    <?= $this->renderSection('css'); ?>
 </head>
 
 <body>
-    <!-- Sidebar -->
     <?= $this->include('layout/superadmin_template/sidebar'); ?>
-
-    <!-- Topbar -->
     <?= $this->include('layout/superadmin_template/topbar'); ?>
 
-    <!-- MAIN (Bebas pakai Bootstrap di sini) -->
     <main>
         <div class="c2g-container">
-            <?= $this->rendersection('content'); ?>
+            <?= $this->renderSection('content'); ?>
         </div>
     </main>
 
-    <!-- Footer -->
     <footer class="c2g-footer">
         <div class="c2g-footer-inner">
-            <span class="c2g-brand">Myasset © <?= date('Y'); ?></span>
+            <span class="c2g-brand">MyAsset © <?= date('Y'); ?></span>
         </div>
     </footer>
 
-    <script type="text/javascript" src="<?= base_url(); ?>/bootstrap/js/jquery-3.7.1.js"></script>
-    <script type="text/javascript" src="<?= base_url(); ?>/bootstrap/js/bootstrap.bundle.min.js"></script>
-    <script type="text/javascript" src="<?= base_url(); ?>/bootstrap/js/dataTables.js"></script>
-    <script type="text/javascript" src="<?= base_url(); ?>/bootstrap/js/dataTables.bootstrap5.js"></script>
-    <script type="text/javascript" src="<?= base_url(); ?>/bootstrap/js/app.js" defer></script>
+    <!-- Toast Notification -->
+    <div class="position-fixed top-0 end-0 p-3" style="z-index: 1080">
+        <div id="global-toast" class="toast align-items-center border-0 text-bg-primary" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body" id="global-toast-msg">Notifikasi umum</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    </div>
 
+    <!-- jQuery -->
+    <script src="<?= base_url(); ?>/bootstrap/js/jquery-3.7.1.js"></script>
+
+    <!-- Bootstrap Bundle -->
+    <script src="<?= base_url(); ?>/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+    <!-- DataTables Core -->
+    <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
+
+    <!-- DataTables Buttons -->
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+
+    <!-- Export Dependencies -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+    <!-- FIX PDF Export → gunakan versi KOMPATIBEL -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.70/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.70/vfs_fonts.js"></script>
+
+    <!-- Select2 -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <!-- Custom App -->
+    <script src="<?= base_url(); ?>/bootstrap/js/app.js" defer></script>
+
+    <!-- Section JS -->
+    <?= $this->renderSection('scripts'); ?>
+
+    <!-- Toast Function -->
     <script>
-        new DataTable('#example');
+        window.showToast = function(message, type = 'success') {
+            const toastEl = document.getElementById('global-toast');
+            const msgEl = document.getElementById('global-toast-msg');
+
+            toastEl.className = `toast align-items-center border-0 text-bg-${type}`;
+            msgEl.textContent = message;
+
+            const toast = new bootstrap.Toast(toastEl, {
+                delay: 3000
+            });
+            toast.show();
+        };
     </script>
+
+    <?php
+    $flashSuccess = session()->getFlashdata('success');
+    $flashError   = session()->getFlashdata('error');
+    $flashWarning = session()->getFlashdata('warning');
+    $flashInfo    = session()->getFlashdata('info');
+    ?>
+
+    <!-- Auto Toast -->
     <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-            var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
-                return new bootstrap.Tooltip(tooltipTriggerEl)
-            })
+        document.addEventListener('DOMContentLoaded', () => {
+            <?php if ($flashSuccess): ?> showToast("<?= esc($flashSuccess) ?>", 'success');
+            <?php endif; ?>
+            <?php if ($flashError): ?> showToast("<?= esc($flashError) ?>", 'danger');
+            <?php endif; ?>
+            <?php if ($flashWarning): ?> showToast("<?= esc($flashWarning) ?>", 'warning');
+            <?php endif; ?>
+            <?php if ($flashInfo): ?> showToast("<?= esc($flashInfo) ?>", 'info');
+            <?php endif; ?>
         });
     </script>
 

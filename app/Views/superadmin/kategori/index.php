@@ -37,7 +37,7 @@
             </div>
             <div class="card-body px-0">
                 <div class="table-responsive rounded mb-3">
-                    <table id="example" class="table table-hover">
+                    <table class="table table-hover datatable-myasset">
                         <thead class="bg-white text-uppercase">
                             <tr class="ligth ligth-data">
                                 <th>No</th>
@@ -52,12 +52,33 @@
                                     <td><?= $i + 1 ?></td>
                                     <td><?= esc($kategori['nama_kategori']) ?></td>
                                     <td><?= esc($kategori['kode_kategori']) ?></td>
-                                    <td>
-                                        <a href="<?= base_url('superadmin/kategori/edit/' . $kategori['id_kategori']) ?>" class="btn btn-sm btn-warning">Edit</a>
-                                        <form action="<?= base_url('superadmin/kategori/delete/' . $kategori['id_kategori']) ?>" method="post" class="d-inline" onsubmit="return confirm('Yakin hapus?')">
-                                            <?= csrf_field() ?>
-                                            <button class="btn btn-sm btn-danger" type="submit">Hapus</button>
-                                        </form>
+                                    <td class="text-center align-middle">
+                                        <div class="d-flex justify-content-center align-items-center list-action">
+
+                                            <!-- Tombol Edit -->
+                                            <a href="<?= base_url('superadmin/kategori/edit/' . $kategori['id_kategori']) ?>"
+                                                class="btn btn-sm"
+                                                data-bs-toggle="tooltip"
+                                                data-bs-placement="top"
+                                                title="Edit">
+                                                <i class="bi bi-pen" style="color: #fd7e14;"></i>
+                                            </a>
+
+                                            <!-- Tombol Delete -->
+                                            <form action="<?= base_url('superadmin/kategori/delete/' . $kategori['id_kategori']) ?>"
+                                                method="post"
+                                                class="d-inline"
+                                                onsubmit="return confirm('Hapus kategori ini?')">
+                                                <?= csrf_field() ?>
+                                                <button type="submit"
+                                                    class="btn btn-sm"
+                                                    data-bs-toggle="tooltip"
+                                                    data-bs-placement="top"
+                                                    title="Delete">
+                                                    <i class="bi bi-trash3" style="color: #fd7e14;"></i>
+                                                </button>
+                                            </form>
+                                        </div>
                                     </td>
                                 </tr>
                             <?php endforeach ?>

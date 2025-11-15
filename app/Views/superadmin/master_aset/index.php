@@ -39,7 +39,7 @@
         </div>
         <div class="card-body px-0">
             <div class="table-responsive rounded mb-3">
-                <table id="example" class="table table-hover">
+                <table class="table table-hover datatable-myasset">
                     <thead class="bg-white">
                         <tr class="ligth ligth-data">
                             <th>

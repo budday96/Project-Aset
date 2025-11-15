@@ -70,6 +70,25 @@
                     </div>
                 </div>
 
+                <!-- Kelompok Harta -->
+                <div class="col-md-12">
+                    <label class="form-label">Kelompok Harta *</label>
+                    <select name="id_kelompok_harta"
+                        class="form-select <?= session('errors.id_kelompok_harta') ? 'is-invalid' : '' ?>" required>
+                        <option value="" disabled <?= old('id_kelompok_harta', $row['id_kelompok_harta'] ?? '') ? '' : 'selected' ?>>-- Pilih --</option>
+                        <?php foreach ($kelompokHarta as $kh): ?>
+                            <option value="<?= $kh['id_kelompok_harta'] ?>"
+                                <?= (string)old('id_kelompok_harta', $row['id_kelompok_harta'] ?? '') === (string)$kh['id_kelompok_harta'] ? 'selected' : '' ?>>
+                                <?= esc($kh['kode_kelompok'] . ' - ' . $kh['nama_kelompok']) ?>
+                            </option>
+                        <?php endforeach ?>
+                    </select>
+                    <div class="invalid-feedback">
+                        <?= session('errors.id_kelompok_harta') ?: 'Silakan pilih kelompok harta.' ?>
+                    </div>
+                </div>
+
+
                 <!-- Kategori -->
                 <div class="col-md-6">
                     <label class="form-label">Kategori *</label>
