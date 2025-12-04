@@ -57,10 +57,7 @@
                         <i class="bi bi-plus-circle me-1 fs-5"></i>
                         <span class="text-truncate" style="max-width: 90px;">Tambah Aset</span>
                     </a>
-
-
                 </div>
-
             </div>
 
 
@@ -654,7 +651,5 @@
 
     });
 </script>
-
-
 
 <?= $this->endSection(); ?>

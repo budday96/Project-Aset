@@ -148,7 +148,7 @@
                                         </td>
                                         <td>
                                             <strong><?= esc($a['kode_aset']); ?></strong><br>
-                                            <small class="text-muted"><?= esc($a['nama_aset']); ?></small>
+                                            <small class="text-muted"><?= esc($a['nama_master']); ?></small>
                                         </td>
                                         <td><?= esc($a['nama_master']); ?></td>
                                         <td><?= esc($a['nama_kategori']); ?></td>

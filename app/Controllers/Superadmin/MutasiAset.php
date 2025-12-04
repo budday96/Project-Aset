@@ -368,7 +368,7 @@ class MutasiAset extends BaseController
         }
 
         $details = $this->detailModel
-            ->select('mutasi_aset_detail.*, aset.kode_aset, aset.nama_aset, master_aset.nama_master')
+            ->select('mutasi_aset_detail.*, aset.kode_aset, master_aset.nama_master AS nama_master')
             ->join('aset', 'aset.id_aset = mutasi_aset_detail.id_aset_asal')
             ->join('master_aset', 'master_aset.id_master_aset = aset.id_master_aset', 'left')
             ->where('id_mutasi', $id)
