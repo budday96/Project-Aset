@@ -76,15 +76,34 @@ function closeAllSubMenus(){
   });
 })();
 
-// DataTable: hanya jika #mytable ada di halaman
-document.addEventListener('DOMContentLoaded', function() {
 
-    // Bootstrap tooltip
+// ====== Bootstrap Tooltip Initialization ======
+document.addEventListener('DOMContentLoaded', function () {
+
+    // Inisialisasi Tooltip Bootstrap
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    tooltipTriggerList.map(function(el) {
-        return new bootstrap.Tooltip(el);
+
+    tooltipTriggerList.map(function (el) {
+
+        // Tooltip instance
+        var tt = new bootstrap.Tooltip(el, {
+            trigger: 'hover focus' // bawaan Bootstrap (paling baik untuk UX)
+        });
+
+        // Hilangkan tooltip saat tombol diklik
+        el.addEventListener('click', function () {
+            tt.hide();
+        });
+
+        // Jika mouse keluar, tooltip juga hilang
+        el.addEventListener('mouseleave', function () {
+            tt.hide();
+        });
+
+        return tt;
     });
 });
+
 
 $(document).ready(function () {
 

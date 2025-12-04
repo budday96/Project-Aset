@@ -290,14 +290,86 @@
         $('#master_aset').on('change', function() {
             const id = $(this).val();
             if (!id) return;
-            $.getJSON(`${BASE}/superadmin/aset/detailMaster/${id}`, data => {
-                if (data.error) return alert(data.error);
-                $('#kategori').val(data.kategori);
-                $('#subkategori').val(data.subkategori);
-                $('#nilai_perolehan').val(data.nilai_perolehan);
-                $('#bulan_tahun').val(data.bulan_tahun_perolehan);
+
+            $.getJSON(`${BASE}/superadmin/aset/ajaxMasterDetail/${id}`, data => {
+                if (!data.ok) {
+                    alert('Master tidak ditemukan');
+                    return;
+                }
+
+                // Set kategori dll
+                $('#kategori').val(data.nama_kategori || '-');
+                $('#subkategori').val(data.nama_subkategori || '-');
+                $('#nilai_perolehan').val(data.nilai_default || '-');
+                $('#bulan_tahun').val(data.periode_default || '-');
+
+                // ==== RENDER ATTRIBUT ====
+                const wrap = $('#dynamic-fields');
+                wrap.empty();
+
+                if (!data.atribut || data.atribut.length === 0) {
+                    wrap.append(`<div class="col-12"><em>Tidak ada atribut untuk master ini.</em></div>`);
+                    return;
+                }
+
+                data.atribut.forEach(a => {
+                    let field = '';
+
+                    // Text
+                    if (a.tipe_input === 'text') {
+                        field = `
+                    <div class="col-md-6">
+                        <label>${a.nama_atribut}${a.is_required ? ' *' : ''}</label>
+                        <input type="text" 
+                               name="atribut[${a.id_atribut}]" 
+                               class="form-control"
+                               value="${a.nilai || ''}"
+                               ${a.is_required ? 'required' : ''}>
+                    </div>
+                `;
+                    }
+
+                    // Number
+                    else if (a.tipe_input === 'number') {
+                        field = `
+                    <div class="col-md-6">
+                        <label>${a.nama_atribut}${a.is_required ? ' *' : ''}</label>
+                        <input type="number" 
+                               name="atribut[${a.id_atribut}]" 
+                               class="form-control"
+                               value="${a.nilai || ''}"
+                               ${a.is_required ? 'required' : ''}>
+                    </div>
+                `;
+                    }
+
+                    // Select
+                    else if (a.tipe_input === 'select') {
+                        let options = '<option value="">-- Pilih --</option>';
+                        if (Array.isArray(a.options)) {
+                            a.options.forEach(opt => {
+                                const selected = (opt == a.nilai) ? 'selected' : '';
+                                options += `<option value="${opt}" ${selected}>${opt}</option>`;
+                            });
+                        }
+
+                        field = `
+                    <div class="col-md-6">
+                        <label>${a.nama_atribut}${a.is_required ? ' *' : ''}</label>
+                        <select name="atribut[${a.id_atribut}]" 
+                                class="form-select"
+                                ${a.is_required ? 'required' : ''}>
+                            ${options}
+                        </select>
+                    </div>
+                `;
+                    }
+
+                    wrap.append(field);
+                });
             });
         });
+
 
         // === Inisialisasi Select2 di modal ===
         $kat.select2({

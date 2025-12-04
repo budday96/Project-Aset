@@ -229,7 +229,7 @@
             if (!id) return;
             fieldsBox.innerHTML = '<div class="col-12">Memuat data master...</div>';
             try {
-                const res = await fetch(`${BASE}/superadmin/aset/ajax-master-detail/${id}`);
+                const res = await fetch(`${BASE}/superadmin/aset/ajaxMasterDetail/${id}`);
                 const js = await res.json();
                 if (!js.ok) throw new Error(js.message || 'Gagal memuat master');
 

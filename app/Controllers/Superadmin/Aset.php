@@ -30,14 +30,8 @@ class Aset extends BaseController
     {
         // === Query utama untuk data aset ===
         $builder = $this->asetModel
-            ->select(
-                'aset.*,
-             cabang.nama_cabang,
-             kategori_aset.nama_kategori,
-             subkategori_aset.nama_subkategori,
-             master_aset.nama_master,
-             master_aset.deleted_at AS master_deleted_at'
-            )
+            ->where('aset.deleted_at IS NULL', null, false)
+            ->select('aset.*, cabang.nama_cabang, kategori_aset.nama_kategori, subkategori_aset.nama_subkategori, master_aset.nama_master')
             ->join('cabang', 'cabang.id_cabang = aset.id_cabang')
             ->join('kategori_aset', 'kategori_aset.id_kategori = aset.id_kategori')
             ->join('subkategori_aset', 'subkategori_aset.id_subkategori = aset.id_subkategori', 'left')
@@ -87,14 +81,21 @@ class Aset extends BaseController
             ? $this->cabangModel->findAll()
             : [$this->cabangModel->find(user()->id_cabang)];
 
-        // Dropdown master → hanya master aktif (soft delete otomatis tersaring di model)
-        $data['masters'] = $this->masterAsetModel->withJoin()->orderBy('nama_master', 'ASC')->findAll();
+        $data['masters'] = $this->masterAsetModel
+            ->withJoin()
+            ->orderBy('nama_master', 'ASC')
+            ->findAll();
 
-        // kategori untuk modal "Master Baru"
-        $data['kategoris'] = $this->kategoriModel->orderBy('nama_kategori', 'ASC')->findAll();
+        $data['kategoris'] = $this->kategoriModel
+            ->orderBy('nama_kategori', 'ASC')
+            ->findAll();
+
+        // ▶️ PATCH BARU: supaya view bisa menerima atribut
+        $data['atributDefaults'] = [];
 
         return view('superadmin/aset/create', $data);
     }
+
 
     private function makeToken(): string
     {
@@ -265,7 +266,42 @@ class Aset extends BaseController
             return redirect()->back()->withInput()->with('error', 'Aset sudah ada. Aktifkan merge untuk menambah stok.');
         }
 
-        // === Case 2: Insert Baru ===
+        // === CASE 2 : Ada existing tetapi SOFT-DELETED ===
+        if ($existing && !empty($existing['deleted_at'])) {
+
+            // kembalikan row dari soft delete
+            $this->asetModel->update($existing['id_aset'], [
+                'deleted_at' => null,
+                'deleted_by' => null,
+                'stock'      => $qty,
+                'kondisi'    => $this->request->getPost('kondisi'),
+                'status'     => $this->request->getPost('status'),
+                'posisi'     => $this->request->getPost('posisi'),
+                'updated_by' => user()->id ?? null,
+            ]);
+
+            // restore atribut default master juga
+            $db->table('aset_atribut')->where('id_aset', $existing['id_aset'])->delete();
+
+            $defaults = $this->masterAsetModel->getAtributDefaults($id_master_aset);
+            if (!empty($defaults)) {
+                $rows = [];
+                foreach ($defaults as $d) {
+                    $rows[] = [
+                        'id_aset'    => $existing['id_aset'],
+                        'id_atribut' => $d['id_atribut'],
+                        'nilai'      => $d['nilai_default'],
+                    ];
+                }
+                if ($rows) $db->table('aset_atribut')->insertBatch($rows);
+            }
+
+            return redirect()->to('/superadmin/aset')
+                ->with('success', 'Aset dipulihkan dari arsip dan diperbarui.');
+        }
+
+
+        // === Case 3: Insert Baru ===
         // QR Token
         $qr_token = bin2hex(random_bytes(16));
 
@@ -291,6 +327,25 @@ class Aset extends BaseController
             'created_by'        => user()->id ?? null,
             'updated_by'        => user()->id ?? null,
         ]);
+
+        // ▶️ PATCH BARU: Simpan default atribut master ke aset
+        if ($newId) {
+            $defaults = $this->masterAsetModel->getAtributDefaults($id_master_aset);
+
+            if (!empty($defaults)) {
+                $rows = [];
+                foreach ($defaults as $a) {
+                    $rows[] = [
+                        'id_aset'    => $newId,
+                        'id_atribut' => $a['id_atribut'],
+                        'nilai'      => $a['nilai_default'], // bisa text/number/json
+                    ];
+                }
+                if (!empty($rows)) {
+                    $db->table('aset_atribut')->insertBatch($rows);
+                }
+            }
+        }
 
         return redirect()->to('/superadmin/aset')->with('success', 'Aset berhasil ditambahkan.');
     }

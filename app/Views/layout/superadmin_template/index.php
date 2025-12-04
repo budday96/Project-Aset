@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= $title ?? 'MyAsset' ?></title>
 
-    <link rel="icon" type="image/png" href="<?= base_url(); ?>/img/favicon.png">
+    <link rel="icon" type="image/png" href="<?= base_url(); ?>/img/logoipsum.png">
 
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="<?= base_url(); ?>/bootstrap/css/bootstrap.min.css">

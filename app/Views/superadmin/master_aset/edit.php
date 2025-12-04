@@ -203,7 +203,7 @@
                 let defaults = {};
                 <?php if (!empty($row)): ?>
                     try {
-                        const preR = await fetch(`${BASE}/superadmin/aset/ajax-master-detail/<?= (int)$row['id_master_aset'] ?>`);
+                        const preR = await fetch(`${BASE}/superadmin/aset/ajaxMasterDetail/<?= (int)$row['id_master_aset'] ?>`);
                         const preJ = await preR.json();
                         if (preJ && preJ.ok && Array.isArray(preJ.atribut)) {
                             defaults = preJ.atribut.reduce((acc, a) => {

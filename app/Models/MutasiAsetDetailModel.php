@@ -4,10 +4,10 @@ namespace App\Models;
 
 use CodeIgniter\Model;
 
-class MutasiAsetModel extends Model
+class MutasiAsetDetailModel extends Model
 {
-    protected $table            = 'mutasi_aset';
-    protected $primaryKey       = 'id_mutasi';
+    protected $table            = 'mutasi_aset_detail';
+    protected $primaryKey       = 'id_detail';
     protected $returnType       = 'array';
     protected $useSoftDeletes   = false;
     protected $useTimestamps    = true;
@@ -15,13 +15,9 @@ class MutasiAsetModel extends Model
     protected $updatedField     = 'updated_at';
 
     protected $allowedFields = [
-        'kode_mutasi',
-        'tanggal_mutasi',
-        'id_cabang_asal',
-        'id_cabang_tujuan',
-        'status',
-        'catatan',
-        'created_by',
-        'updated_by',
+        'id_mutasi',
+        'id_aset_asal',
+        'qty',
+        'keterangan',
     ];
 }

@@ -107,14 +107,22 @@ $routes->group('superadmin', ['filter' => 'role:superadmin'], function ($routes)
     $routes->get('kelompokharta/delete/(:num)', 'Superadmin\KelompokHarta::delete/$1');
 
     // Penyusutan Aset
-    $routes->get('penyusutan-aset', 'Superadmin\PenyusutanAset::index');
+    $routes->get('penyusutan', 'Superadmin\PenyusutanLaporan::index');
+    $routes->post('penyusutan/generate', 'Superadmin\PenyusutanAset::generateBulanan');
+
+    // Laporan Penyusutan Aset
+    $routes->get('penyusutan/laporan', 'Superadmin\PenyusutanLaporan::index');
+    $routes->get('penyusutan/detail/(:num)', 'Superadmin\PenyusutanLaporan::detail/$1');
+
 
     // Arsip aset
     $routes->get('aset/trash', 'Superadmin\Aset::trash');
     $routes->post('aset/restore/(:num)', 'Superadmin\Aset::restore/$1');
     $routes->post('aset/purge/(:num)', 'Superadmin\Aset::purge/$1');
-    // AJAX
-    $routes->get('aset/ajax-master-detail/(:num)', 'Superadmin\Aset::ajaxMasterDetail/$1');
+
+    // AJAX Master-Detail Aset
+    $routes->get('aset/ajaxMasterDetail/(:num)', 'Superadmin\Aset::ajaxMasterDetail/$1');
+
 
     // Master Aset
     $routes->get('master-aset',                 'Superadmin\MasterAset::index');
@@ -134,16 +142,24 @@ $routes->group('superadmin', ['filter' => 'role:superadmin'], function ($routes)
     $routes->post('master-aset/quick-store', 'Superadmin\MasterAset::quickStore');                  // POST create master cepat (AJAX)
 
     // Mutasi Aset
-    $routes->get('mutasi',     'Superadmin\MutasiAset::index');
-    $routes->get('mutasi/create',     'Superadmin\MutasiAset::create');
-    $routes->post('mutasi/store',     'Superadmin\MutasiAset::store');
-    $routes->post('mutasi/kirim/(:num)',    'Superadmin\MutasiAset::kirim/$1');
-    $routes->post('mutasi/terima/(:num)',   'Superadmin\MutasiAset::terima/$1');
-    $routes->post('mutasi/batalkan/(:num)', 'Superadmin\MutasiAset::batalkan/$1');
+    $routes->get('mutasi',              'Superadmin\MutasiAset::index');
+    $routes->get('mutasi/create',       'Superadmin\MutasiAset::create');
+    $routes->post('mutasi/store',       'Superadmin\MutasiAset::store');
+    $routes->get('mutasi/(:num)',       'Superadmin\MutasiAset::show/$1');
+    $routes->post('mutasi/kirim-header/(:num)', 'Superadmin\MutasiAset::kirimHeader/$1');
+    $routes->post('mutasi/batal-header/(:num)', 'Superadmin\MutasiAset::batalHeader/$1');
+    $routes->post('mutasi/terima-header/(:num)', 'Superadmin\MutasiAset::terimaHeader/$1');
 
+
+    // $routes->get('mutasi',     'Superadmin\MutasiAset::index');
+    // $routes->get('mutasi/create',     'Superadmin\MutasiAset::create');
+    // $routes->post('mutasi/store',     'Superadmin\MutasiAset::store');
+    // $routes->post('mutasi/kirim-header/(:num)', 'Superadmin\MutasiAset::kirimHeader/$1');
+    // $routes->post('mutasi/batal-header/(:num)', 'Superadmin\MutasiAset::batalHeader/$1');
+    // $routes->post('mutasi/terima-header/(:num)', 'Superadmin\MutasiAset::terimaHeader/$1');
 
     // AJAX dropdown aset berdasarkan cabang asal
-    $routes->get('mutasi/assets-by-cabang/(:num)', 'Superadmin\MutasiAset::assetsByCabang/$1');
+    // $routes->get('mutasi/assets-by-cabang/(:num)', 'Superadmin\MutasiAset::assetsByCabang/$1');
 
     // Riwayat Mutasi Aset
     $routes->get('riwayat-mutasi', 'Superadmin\RiwayatMutasi::index');

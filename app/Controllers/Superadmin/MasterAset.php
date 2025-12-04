@@ -93,6 +93,7 @@ class MasterAset extends BaseController
 
         $db->transException(true)->transStart();
         try {
+
             $idMaster = $this->masterModel->insert($payload, true);
             if (!$idMaster) {
                 throw new \RuntimeException(implode('; ', (array)$this->masterModel->errors()) ?: 'Insert model gagal tanpa pesan.');
@@ -207,6 +208,7 @@ class MasterAset extends BaseController
             // ---------------------------------------------------------------------
             // 1️⃣ UPDATE MASTER
             // ---------------------------------------------------------------------
+
             $this->masterModel->update((int)$id, $payload);
 
             // Generate kode_master jika masih kosong
@@ -256,33 +258,26 @@ class MasterAset extends BaseController
             foreach ($asetList as $asetRow) {
                 $idAset = (int)$asetRow['id_aset'];
 
-                // Ambil atribut yang sudah dimiliki aset
-                $existing = $db->table('aset_atribut')
-                    ->select('id_atribut')
+                // Hapus semua atribut lama aset
+                $db->table('aset_atribut')
                     ->where('id_aset', $idAset)
-                    ->get()->getResultArray();
+                    ->delete();
 
-                $existingIDs = array_column($existing, 'id_atribut');
-
+                // Insert ulang seluruh atribut default master
                 $batch = [];
-
                 foreach ($defaultAttrs as $d) {
-                    $idAttr = (int)$d['id_atribut'];
-
-                    // Jika atribut baru → tambahkan ke aset
-                    if (!in_array($idAttr, $existingIDs)) {
-                        $batch[] = [
-                            'id_aset'    => $idAset,
-                            'id_atribut' => $idAttr,
-                            'nilai'      => $d['nilai_default'],
-                        ];
-                    }
+                    $batch[] = [
+                        'id_aset'    => $idAset,
+                        'id_atribut' => (int)$d['id_atribut'],
+                        'nilai'      => $d['nilai_default'],
+                    ];
                 }
 
                 if (!empty($batch)) {
                     $db->table('aset_atribut')->insertBatch($batch);
                 }
             }
+
 
             // ---------------------------------------------------------------------
             // 4️⃣ SINKRON KLASIFIKASI & DEFAULT NILAI (kode lama kamu)

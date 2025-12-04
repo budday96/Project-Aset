@@ -115,10 +115,29 @@ class Atribut extends BaseController
     {
         $m = new AtributModel();
         $row = $m->find((int)$idAtribut);
-        if ($row) {
-            $m->delete((int)$idAtribut);
-            return redirect()->to(base_url('superadmin/atribut/' . $row['id_subkategori']))->with('success', 'Atribut dihapus.');
+        if (!$row) {
+            return redirect()->back()->with('error', 'Data tidak ditemukan');
         }
-        return redirect()->back()->with('error', 'Data tidak ditemukan');
+
+        $db = \Config\Database::connect();
+        $db->transStart();
+
+        // 1. Hapus default di master
+        $db->table('master_aset_atribut')
+            ->where('id_atribut', (int)$idAtribut)
+            ->delete();
+
+        // 2. Hapus nilai di aset
+        $db->table('aset_atribut')
+            ->where('id_atribut', (int)$idAtribut)
+            ->delete();
+
+        // 3. Hapus field atribut (soft delete)
+        $m->delete((int)$idAtribut);
+
+        $db->transComplete();
+
+        return redirect()->to(base_url('superadmin/atribut/' . $row['id_subkategori']))
+            ->with('success', 'Atribut dan nilainya dihapus.');
     }
 }

@@ -9,31 +9,43 @@
 <?php endif; ?>
 <div class="card">
     <div class="card-body">
-        <div class="card-header bg-white py-3 px-4 d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between">
-            <h4 class="mb-2 mb-md-0 fw-bold">List Subkategori</h4>
-            <div class="d-flex flex-wrap gap-2">
-                <a href="#" class="btn btn-outline-danger btn-sm" data-bs-toggle="tooltip"
-                    data-bs-placement="top" title="Export PDF">
-                    <i class="bi bi-filetype-pdf fs-5"></i>
-                </a>
-                <a href="#" class="btn btn-outline-success btn-sm" data-bs-toggle="tooltip"
-                    data-bs-placement="top" title="Export Excel">
-                    <i class="bi bi-filetype-xls fs-5"></i>
-                </a>
-                <a href="<?= base_url('superadmin/subkategori'); ?>" class="btn btn-outline-secondary btn-sm" data-bs-toggle="tooltip"
-                    data-bs-placement="top" title="Refresh">
-                    <i class="bi bi-arrow-clockwise fs-5"></i>
-                </a>
-                <a class="btn btn-warning btn-sm fw-semibold d-flex align-items-center" href="<?= base_url('superadmin/subkategori/create') ?>">
-                    <i class="bi bi-plus-circle me-1 fs-5"></i>
-                    <span class="d-none d-sm-inline">Tambah Subkategori</span>
-                    <span class="d-inline d-sm-none">Add</span>
-                </a>
-                <a class="btn btn-dark btn-sm fw-semibold d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#view-notes" href="#">
-                    <i class="bi bi-upload me-2"></i>
-                    <span class="d-none d-sm-inline">Import Product</span>
-                    <span class="d-inline d-sm-none">Import</span>
-                </a>
+        <div class="card-header bg-white py-3 px-4">
+            <!-- TOP BAR: TITLE + ACTION BUTTONS -->
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3">
+
+                <!-- TITLE -->
+                <h4 class="fw-bold mb-3 mb-md-0 text-center text-md-start w-100">
+                    List Subkategori
+                </h4>
+
+                <!-- BUTTON GROUP -->
+                <div class="d-flex flex-wrap gap-2 w-100 w-md-auto justify-content-center justify-content-md-end">
+
+                    <!-- EXPORT PDF -->
+                    <button id="btn-export-pdf" class="btn btn-outline-danger btn-sm" data-bs-toggle="tooltip" title="Export PDF">
+                        <i class="bi bi-filetype-pdf fs-5"></i>
+                    </button>
+
+                    <!-- EXPORT EXCEL -->
+                    <button id="btn-export-excel" class="btn btn-outline-success btn-sm" data-bs-toggle="tooltip" title="Export Excel">
+                        <i class="bi bi-filetype-xls fs-5"></i>
+                    </button>
+
+                    <!-- REFRESH -->
+                    <a href="<?= base_url('/superadmin/subkategori'); ?>"
+                        class="btn btn-outline-secondary btn-sm"
+                        data-bs-toggle="tooltip" title="Refresh">
+                        <i class="bi bi-arrow-clockwise fs-5"></i>
+                    </a>
+
+                    <!-- TAMBAH Subkategori -->
+                    <a class="btn btn-warning btn-sm fw-semibold d-flex align-items-center justify-content-center px-2"
+                        href="<?= base_url('superadmin/subkategori/create') ?>">
+
+                        <i class="bi bi-plus-circle me-1 fs-5"></i>
+                        <span class="text-truncate">Tambah Subkategori</span>
+                    </a>
+                </div>
             </div>
         </div>
         <div class="card-body px-0">
@@ -41,6 +53,12 @@
                 <table class="table table-hover datatable-myasset">
                     <thead class="bg-white text-uppercase">
                         <tr class="ligth ligth-data">
+                            <th>
+                                <div class="checkbox d-inline-block">
+                                    <input type="checkbox" class="checkbox-input" id="checkbox1">
+                                    <label for="checkbox1" class="mb-0"></label>
+                                </div>
+                            </th>
                             <th>Kategori</th>
                             <th>Subkategori</th>
                             <th>Atribut</th>
@@ -50,6 +68,17 @@
                     <tbody>
                         <?php foreach ($subkategoris as $s): ?>
                             <tr>
+                                <td class="align-middle">
+                                    <div class="checkbox d-inline-block">
+                                        <?php $checkboxId = 'checkbox_' . $s['id_subkategori']; ?>
+                                        <input type="checkbox"
+                                            class="checkbox-input"
+                                            id="<?= $checkboxId ?>"
+                                            name="selected[]"
+                                            value="<?= $s['id_subkategori'] ?>">
+                                        <label for="<?= $checkboxId ?>" class="mb-0"></label>
+                                    </div>
+                                </td>
                                 <td><?= esc($s['nama_kategori']) ?></td>
                                 <td><?= esc($s['nama_subkategori']) ?></td>
                                 <td><a class="btn btn-outline-secondary btn-sm" href="<?= base_url('superadmin/atribut/' . $s['id_subkategori']) ?>">Kelola</a></td>

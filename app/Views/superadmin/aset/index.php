@@ -21,12 +21,18 @@
 
 <div class="card">
     <div class="card-body">
-        <div class="card-header bg-white py-3 px-4">
+        <div class="card-header bg-light py-3 px-4 border-bottom">
             <!-- TOP BAR: TITLE + ACTION BUTTONS -->
-            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3">
-                <h4 class="fw-bold mb-3 mb-md-0">📦 List Aset Barang</h4>
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3">
 
-                <div class="d-flex flex-wrap gap-2">
+                <!-- TITLE -->
+                <h4 class="fw-bold mb-3 mb-md-0 text-center text-md-start w-100">
+                    📦 List Aset Barang
+                </h4>
+
+                <!-- BUTTON GROUP -->
+                <div class="d-flex flex-wrap gap-2 w-100 w-md-auto justify-content-center justify-content-md-end">
+
                     <!-- EXPORT PDF -->
                     <button id="btn-export-pdf" class="btn btn-outline-danger btn-sm" data-bs-toggle="tooltip" title="Export PDF">
                         <i class="bi bi-filetype-pdf fs-5"></i>
@@ -36,17 +42,27 @@
                     <button id="btn-export-excel" class="btn btn-outline-success btn-sm" data-bs-toggle="tooltip" title="Export Excel">
                         <i class="bi bi-filetype-xls fs-5"></i>
                     </button>
-                    <a href="<?= base_url('/superadmin/aset'); ?>" class="btn btn-outline-secondary btn-sm" data-bs-toggle="tooltip"
-                        data-bs-placement="top" title="Refresh">
+
+                    <!-- REFRESH -->
+                    <a href="<?= base_url('/superadmin/aset'); ?>"
+                        class="btn btn-outline-secondary btn-sm"
+                        data-bs-toggle="tooltip" title="Refresh">
                         <i class="bi bi-arrow-clockwise fs-5"></i>
                     </a>
-                    <a class="btn btn-warning btn-sm fw-semibold d-flex align-items-center" href="<?= base_url('superadmin/aset/create') ?>">
+
+                    <!-- TAMBAH ASET -->
+                    <a class="btn btn-warning btn-sm fw-semibold d-flex align-items-center justify-content-center px-2"
+                        href="<?= base_url('superadmin/aset/create') ?>">
+
                         <i class="bi bi-plus-circle me-1 fs-5"></i>
-                        <span class="d-none d-sm-inline">Tambah Aset</span>
-                        <span class="d-inline d-sm-none">Add</span>
+                        <span class="text-truncate" style="max-width: 90px;">Tambah Aset</span>
                     </a>
+
+
                 </div>
+
             </div>
+
 
             <!-- FILTER SECTION -->
             <div class="p-3 rounded-3 border">
@@ -99,9 +115,9 @@
 
 
                     <!-- Reset Button -->
-                    <div class="col-md-1 col-12 d-flex align-items-end">
+                    <div class="col-md-2 col-12 d-flex align-items-end">
                         <button id="reset-filter" class="btn btn-outline-danger btn-sm w-100">
-                            Reset
+                            <i class="bi bi-arrow-counterclockwise"></i> Reset
                         </button>
                     </div>
                 </div>

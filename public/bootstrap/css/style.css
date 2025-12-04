@@ -473,6 +473,21 @@ main {
   }
 }
 
+/* ===== Tooltip umum ===== */
+.tooltip {
+    pointer-events: none;
+    transition: opacity .15s ease-in-out;
+}
+
+    .table tbody tr {
+      transition: transform 0.2s cubic-bezier(0.4,0,0.2,1), box-shadow 0.2s cubic-bezier(0.4,0,0.2,1);
+    }
+    .table tbody tr:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+
 /* Matikan efek list Bootstrap untuk komponen c2g */
 #c2g-sidebar ul,
 #c2g-topbar ul,

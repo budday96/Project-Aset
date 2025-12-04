@@ -9,7 +9,7 @@ class Dashboard extends BaseController
     public function index(): string
     {
         return view('superadmin/dashboard/index', [
-            'title' => 'Dashboard Superadmin',
+            'title' => 'Dashboard',
         ]);
     }
 }

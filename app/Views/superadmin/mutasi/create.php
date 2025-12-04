@@ -1,229 +1,240 @@
 <?= $this->extend('layout/superadmin_template/index'); ?>
 <?= $this->section('content'); ?>
-<?php helper('auth'); ?>
 
-<?php if (session()->getFlashdata('error')): ?>
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        <?= esc(session()->getFlashdata('error')); ?>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-<?php endif; ?>
+<style>
+    .table-responsive {
+        max-height: 300px;
+        overflow-y: auto;
+        position: relative;
+    }
 
-<div class="card">
-    <div class="card-body">
-        <form action="<?= base_url('superadmin/mutasi/store'); ?>" method="post" autocomplete="off">
-            <?= csrf_field(); ?>
+    /* Sticky Header */
+    .table-responsive thead th {
+        position: sticky;
+        top: 0;
+        background: #f8f9fa;
+        /* Warna header Bootstrap */
+        z-index: 5;
+    }
+</style>
 
-            <?php if (in_groups('superadmin')): ?>
-                <!-- Cabang Asal (Superadmin memilih) -->
-                <div class="mb-3">
-                    <label for="dari_cabang" class="form-label">Cabang Asal <span class="text-danger">*</span></label>
-                    <select name="dari_cabang" id="dari_cabang" class="form-select" required>
-                        <option value="" disabled <?= old('dari_cabang') ? '' : 'selected' ?>>Pilih cabang asal...</option>
+
+<div class="card shadow-sm border-0">
+    <div class="card-body p-4">
+
+        <h4 class="fw-bold mb-2">Mutasi Aset Antar Cabang</h4>
+        <p class="text-muted mb-4">Gunakan form berikut untuk membuat permintaan mutasi aset antar cabang.</p>
+
+        <!-- ALERT -->
+        <?php if (session()->getFlashdata('error')): ?>
+            <div class="alert alert-danger"><?= esc(session()->getFlashdata('error')) ?></div>
+        <?php endif; ?>
+
+        <?php if (session()->getFlashdata('success')): ?>
+            <div class="alert alert-success"><?= esc(session()->getFlashdata('success')) ?></div>
+        <?php endif; ?>
+
+
+        <!-- ===========================
+             STEP 1 – PILIH CABANG ASAL
+        ============================ -->
+        <div class="mb-4 p-3 rounded-3 border bg-light">
+            <h6 class="fw-bold mb-3">Step 1 — Pilih Cabang Asal</h6>
+
+            <form class="row g-3" method="get" action="<?= current_url(); ?>">
+                <div class="col-md-5">
+                    <label class="form-label fw-semibold">Cabang Asal</label>
+                    <select name="cabang_asal" id="cabang_asal" class="form-select" required>
+                        <option value="">-- Pilih Cabang Asal --</option>
                         <?php foreach ($cabangs as $c): ?>
-                            <option value="<?= esc($c['id_cabang']); ?>" <?= (string)old('dari_cabang') === (string)$c['id_cabang'] ? 'selected' : ''; ?>>
+                            <option value="<?= $c['id_cabang']; ?>"
+                                <?= ($selectedCabangAsal == $c['id_cabang']) ? 'selected' : ''; ?>>
                                 <?= esc($c['nama_cabang']); ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
-                    <div class="form-text">Aset akan dimuat otomatis berdasarkan cabang asal.</div>
                 </div>
-            <?php else: ?>
-                <!-- Non-superadmin (fallback): cabang asal = cabang user, tidak ditampilkan -->
-                <input type="hidden" name="dari_cabang" value="<?= esc(user()->id_cabang); ?>">
-            <?php endif; ?>
 
-            <!-- Pilih Aset (dinamis utk superadmin; langsung terisi utk non-superadmin) -->
-            <div class="mb-3">
-                <label for="id_aset" class="form-label">Aset <span class="text-danger">*</span></label>
-                <select name="id_aset" id="id_aset" class="form-select" required <?= (in_groups('superadmin') && !old('dari_cabang')) ? 'disabled' : ''; ?>>
-                    <?php if (in_groups('superadmin')): ?>
-                        <option value="" disabled <?= old('id_aset') ? '' : 'selected' ?>>Pilih cabang asal dulu...</option>
-                        <?php if (!empty($asets)): ?>
-                            <?php foreach ($asets as $a): ?>
-                                <option value="<?= esc($a['id_aset']); ?>" <?= (string)old('id_aset') === (string)$a['id_aset'] ? 'selected' : ''; ?>>
-                                    <?= esc($a['nama_master'] ?? $a['nama_aset'] ?? '-') ?> (Kode: <?= esc($a['kode_aset'] ?? $a['id_aset']); ?>)
-                                </option>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
-                    <?php else: ?>
-                        <option value="" disabled <?= old('id_aset') ? '' : 'selected' ?>>Pilih aset...</option>
-                        <?php foreach ($asets as $a): ?>
-                            <option value="<?= esc($a['id_aset']); ?>" <?= (string)old('id_aset') === (string)$a['id_aset'] ? 'selected' : ''; ?>>
-                                <?= esc($a['nama_master'] ?? $a['nama_aset'] ?? '-') ?> (Kode: <?= esc($a['kode_aset'] ?? $a['id_aset']); ?>)
-                            </option>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-
-                </select>
-                <div class="form-text">Hanya aset milik cabang asal yang bisa dimutasi.</div>
-            </div>
-
-            <!-- Cabang Tujuan -->
-            <div class="mb-3">
-                <label for="ke_cabang" class="form-label">Cabang Tujuan <span class="text-danger">*</span></label>
-                <select name="ke_cabang" id="ke_cabang" class="form-select" required>
-                    <option value="" disabled <?= old('ke_cabang') ? '' : 'selected' ?>>Pilih cabang tujuan...</option>
-                    <?php foreach ($cabangs as $c): ?>
-                        <option value="<?= esc($c['id_cabang']); ?>" <?= (string)old('ke_cabang') === (string)$c['id_cabang'] ? 'selected' : ''; ?>>
-                            <?= esc($c['nama_cabang']); ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-                <div class="invalid-feedback">Cabang tujuan tidak boleh sama dengan cabang asal.</div>
-            </div>
-
-            <div class="mb-3">
-                <label for="qty" class="form-label">Jumlah Mutasi <span class="text-danger">*</span></label>
-                <input type="number" name="qty" id="qty" class="form-control" min="1" required
-                    placeholder="Masukkan jumlah aset yang akan dimutasi..."
-                    value="<?= old('qty', 1) ?>">
-                <div class="form-text">Masukkan jumlah unit aset yang ingin dipindahkan (minimal 1).</div>
-            </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-search"></i> Tampilkan Aset
+                    </button>
+                </div>
+            </form>
+        </div>
 
 
-            <!-- Keterangan -->
-            <div class="mb-3">
-                <label for="keterangan" class="form-label">Keterangan</label>
-                <textarea name="keterangan" id="keterangan" rows="3" class="form-control" placeholder="Alasan mutasi atau catatan lain..."><?= esc(old('keterangan')); ?></textarea>
-            </div>
+        <?php if ($selectedCabangAsal): ?>
 
-            <div class="d-flex justify-content-between">
-                <a href="<?= base_url('superadmin/mutasi'); ?>" class="btn btn-secondary">
-                    <i class="fas fa-arrow-left me-1"></i> Kembali
-                </a>
-                <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-paper-plane me-1"></i> Ajukan Mutasi
-                </button>
-            </div>
-        </form>
-    </div>
+            <!-- ===========================
+             STEP 2 – DETAIL MUTASI
+        ============================ -->
+            <form method="post" action="<?= site_url('superadmin/mutasi/store'); ?>">
+                <?= csrf_field(); ?>
+                <input type="hidden" name="id_cabang_asal" value="<?= $selectedCabangAsal; ?>">
 
-    <div class="card-footer">
-        <small class="text-muted">
-            Setelah diajukan, status akan <strong>pending</strong>.
-            Cabang asal dapat <em>kirim</em> atau <em>batalkan</em>.
-            Cabang tujuan dapat <em>terima</em> saat status <strong>pending/dikirim</strong>.
-        </small>
+                <div class="mb-4 p-3 rounded-3 border bg-light">
+                    <h6 class="fw-bold mb-3">Step 2 — Detail Mutasi</h6>
+
+                    <div class="row g-3">
+                        <div class="col-md-5">
+                            <label class="form-label fw-semibold">Cabang Tujuan</label>
+                            <select name="id_cabang_tujuan" id="id_cabang_tujuan" class="form-select" required>
+                                <option value="">-- Pilih Cabang Tujuan --</option>
+                                <?php foreach ($cabangs as $c): ?>
+                                    <?php if ($c['id_cabang'] != $selectedCabangAsal): ?>
+                                        <option value="<?= $c['id_cabang']; ?>">
+                                            <?= esc($c['nama_cabang']); ?>
+                                        </option>
+                                    <?php endif; ?>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+
+                        <div class="col-md-7">
+                            <label class="form-label fw-semibold">Catatan (Opsional)</label>
+                            <textarea name="catatan" id="catatan" rows="1" class="form-control"
+                                placeholder="Tambahkan catatan tambahan jika diperlukan..."><?= old('catatan'); ?></textarea>
+                        </div>
+                    </div>
+                </div>
+
+
+                <!-- ===========================
+                 STEP 3 – PILIH ASET
+            ============================ -->
+                <div class="mb-3">
+                    <h6 class="fw-bold mb-2">Step 3 — Pilih Aset untuk Dimutasi</h6>
+                    <p class="text-muted small mb-3">
+                        Centang aset yang ingin dipindahkan, kemudian isi jumlah mutasi. Sistem otomatis memvalidasi stok & cabang.
+                    </p>
+
+                    <h6 class="fw-bold mb-2">Step 3 — Pilih Aset untuk Dimutasi</h6>
+
+                    <div class="row justify-content-end mb-2">
+                        <div class="col-12 col-md-6 col-lg-4">
+                            <div class="input-group">
+                                <span class="input-group-text bg-light"><i class="bi bi-search"></i></span>
+                                <input type="text" id="searchAset" class="form-control" placeholder="Cari aset...">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-borderless">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="text-center">
+                                        <input type="checkbox" id="checkAll">
+                                    </th>
+                                    <th>Kode Aset</th>
+                                    <th>Nama Aset</th>
+                                    <th>Kategori</th>
+                                    <th>Cabang</th>
+                                    <th class="text-center">Stock</th>
+                                    <th class="text-center" width="140">Qty Mutasi</th>
+                                    <th width="200">Keterangan</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                <?php foreach ($asets as $a): ?>
+                                    <tr>
+                                        <td class="text-center">
+                                            <input type="checkbox"
+                                                class="row-check"
+                                                name="items[<?= $a['id_aset']; ?>][checked]"
+                                                value="1">
+                                        </td>
+                                        <td>
+                                            <strong><?= esc($a['kode_aset']); ?></strong><br>
+                                            <small class="text-muted"><?= esc($a['nama_aset']); ?></small>
+                                        </td>
+                                        <td><?= esc($a['nama_master']); ?></td>
+                                        <td><?= esc($a['nama_kategori']); ?></td>
+                                        <td><?= esc($a['nama_cabang']); ?></td>
+                                        <td class="text-center fw-bold"><?= (int)$a['stock']; ?></td>
+                                        <td>
+                                            <input type="number" class="form-control form-control-sm text-center"
+                                                name="items[<?= $a['id_aset']; ?>][qty]"
+                                                min="1"
+                                                max="<?= (int)$a['stock']; ?>"
+                                                value="1">
+                                        </td>
+                                        <td>
+                                            <input type="text"
+                                                name="items[<?= $a['id_aset']; ?>][keterangan]"
+                                                class="form-control form-control-sm"
+                                                placeholder="Tambahan (opsional)">
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+
+                                <?php if (empty($asets)): ?>
+                                    <tr>
+                                        <td colspan="8" class="text-center text-muted py-3">
+                                            Tidak ada aset di cabang asal ini.
+                                        </td>
+                                    </tr>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+
+                <!-- ===========================
+                 ACTION BUTTONS
+            ============================ -->
+                <!-- FLOATING ACTION BAR -->
+                <div class="position-sticky bg-white border-top pt-2 pb-2"
+                    style="bottom: 0; z-index: 99;">
+                    <div class="d-flex justify-content-end gap-2 container">
+                        <a href="<?= site_url('superadmin/mutasi'); ?>" class="btn btn-secondary">
+                            Batal
+                        </a>
+                        <button type="submit" class="btn btn-primary px-4">
+                            <i class="bi bi-send-check"></i> Proses Mutasi
+                        </button>
+                    </div>
+                </div>
+
+            </form>
+
+        <?php else: ?>
+            <p class="text-muted mt-3">Silakan pilih cabang asal untuk menampilkan daftar aset.</p>
+        <?php endif; ?>
     </div>
 </div>
 
-<!-- JS: muat aset ketika cabang asal dipilih & cegah tujuan sama dg asal -->
+
 <script>
-    (function() {
-        const BASE = "<?= base_url(); ?>";
-        const isSuperadmin = <?= in_groups('superadmin') ? 'true' : 'false'; ?>;
+    document.addEventListener('DOMContentLoaded', function() {
 
-        const dariSel = document.getElementById('dari_cabang');
-        const asetSel = document.getElementById('id_aset');
-        const keSel = document.getElementById('ke_cabang');
-
-        function setLoadingSelect(selectEl, text) {
-            selectEl.innerHTML = '';
-            const opt = document.createElement('option');
-            opt.value = '';
-            opt.disabled = true;
-            opt.selected = true;
-            opt.textContent = text;
-            selectEl.appendChild(opt);
-        }
-
-        function disableKeCabangEqualToDari() {
-            if (!keSel) return;
-            const dariVal = dariSel ? dariSel.value : "<?= esc(old('dari_cabang') ?? (in_groups('superadmin') ? '' : (user()->id_cabang ?? ''))); ?>";
-            let changed = false;
-
-            [...keSel.options].forEach(opt => {
-                if (!opt.value) return;
-                if (opt.value === dariVal) {
-                    opt.disabled = true;
-                    // Jika ke == dari, reset pilihan
-                    if (keSel.value === opt.value) {
-                        keSel.value = '';
-                        changed = true;
-                    }
-                } else {
-                    opt.disabled = false;
-                }
+        // CHECK ALL
+        const checkAll = document.getElementById('checkAll');
+        if (checkAll) {
+            checkAll.addEventListener('change', function() {
+                document.querySelectorAll('.row-check').forEach(cb => cb.checked = checkAll.checked);
             });
-
-            if (changed) {
-                keSel.classList.add('is-invalid');
-            } else {
-                keSel.classList.remove('is-invalid');
-            }
         }
 
-        async function loadAsetsByCabang(cabangId) {
-            if (!cabangId) return;
-            asetSel.disabled = true;
-            setLoadingSelect(asetSel, 'Memuat aset...');
+        // LIVE SEARCH
+        const searchInput = document.getElementById('searchAset');
+        const tableRows = document.querySelectorAll("table tbody tr");
 
-            try {
-                const res = await fetch(`${BASE}/superadmin/mutasi/assets-by-cabang/${encodeURIComponent(cabangId)}`, {
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
+        if (searchInput) {
+            searchInput.addEventListener("keyup", function() {
+                const keyword = this.value.toLowerCase();
+
+                tableRows.forEach(row => {
+                    const text = row.innerText.toLowerCase();
+                    row.style.display = text.includes(keyword) ? "" : "none";
                 });
-                const data = await res.json();
-
-                asetSel.innerHTML = '';
-                const placeholder = document.createElement('option');
-                placeholder.value = '';
-                placeholder.disabled = true;
-                placeholder.selected = true;
-                placeholder.textContent = data.length ? 'Pilih aset...' : 'Tidak ada aset pada cabang ini';
-                asetSel.appendChild(placeholder);
-
-                data.forEach(a => {
-                    const opt = document.createElement('option');
-                    opt.value = a.id_aset;
-                    const nama = a.nama_master || a.nama_aset || '-'; // ⬅️ pakai nama_master
-                    opt.textContent = `${nama} (Kode: ${a.kode_aset ?? a.id_aset})`;
-                    if ("<?= esc(old('id_aset')) ?>" && "<?= esc(old('id_aset')) ?>" == a.id_aset) {
-                        opt.selected = true;
-                        placeholder.selected = false;
-                    }
-                    asetSel.appendChild(opt);
-                });
-
-
-            } catch (e) {
-                setLoadingSelect(asetSel, 'Gagal memuat aset');
-                console.error(e);
-            } finally {
-                asetSel.disabled = false;
-            }
-        }
-
-        // Init behavior
-        if (isSuperadmin && dariSel) {
-            // On change: reload assets & adjust ke_cabang
-            dariSel.addEventListener('change', (e) => {
-                const id = e.target.value;
-                disableKeCabangEqualToDari();
-                loadAsetsByCabang(id);
             });
-
-            // First paint: if old('dari_cabang') exists, load assets
-            if (dariSel.value) {
-                disableKeCabangEqualToDari();
-                loadAsetsByCabang(dariSel.value);
-            } else {
-                // Fresh page
-                setLoadingSelect(asetSel, 'Pilih cabang asal dulu...');
-                asetSel.disabled = true;
-            }
-        } else {
-            // Non-superadmin: hanya perlu pastikan ke != dari
-            disableKeCabangEqualToDari();
         }
-
-        // Validasi ringan saat submit: ke != dari
-        if (keSel) {
-            keSel.addEventListener('change', disableKeCabangEqualToDari);
-        }
-    })();
+    });
 </script>
+
 
 <?= $this->endSection(); ?>
