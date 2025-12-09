@@ -323,6 +323,7 @@ class Aset extends BaseController
             'status'            => $this->request->getPost('status'),
             'posisi'            => $this->request->getPost('posisi'),
             'gambar'            => $namaGambar,
+            'keterangan'        => $this->request->getPost('keterangan'),
             'expired_at'        => $master['expired_default'],
             'created_by'        => user()->id ?? null,
             'updated_by'        => user()->id ?? null,

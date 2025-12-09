@@ -181,8 +181,19 @@
 
             let table = $('#mytable').DataTable({
                 responsive: true,
+                processing: true,
                 autoWidth: false,
-                pageLength: 10,
+
+                dom: '<"row mb-2"' +
+                    '<"col-12 col-md-6 mb-2"l>' +
+                    '<"col-12 col-md-6 d-flex justify-content-md-end"f>' +
+                    '>' +
+                    'rt' +
+                    '<"row mt-3"' +
+                    '<"col-12 col-md-6"i>' +
+                    '<"col-12 col-md-6 d-flex justify-content-md-end mt-2 mt-md-0"p>' +
+                    '>',
+
                 language: {
                     search: "Cari:",
                     lengthMenu: "Tampilkan _MENU_ data",
@@ -194,20 +205,268 @@
                     }
                 },
 
-                // ===============================
-                // HIDE COLUMN KODE, CABANG, KATEGORI
-                // ===============================
                 columnDefs: [{
-                    targets: [0, 2, 3, 10],
+                    targets: [0, 2, 3],
                     visible: false,
                     searchable: true
-                }]
+                }],
+
+                buttons: [
+
+                    // PDF (gaya aset tapi disesuaikan agar semua kolom muat)
+                    {
+                        extend: 'pdfHtml5',
+                        className: 'buttons-pdf',
+                        filename: 'Laporan_Penyusutan_Aset',
+                        orientation: 'landscape',
+                        pageSize: 'A4',
+
+                        exportOptions: {
+                            modifier: {
+                                search: "applied"
+                            },
+                            columns: [1, 4, 5, 6, 7, 8, 9, 10, 11]
+                        },
+
+                        customize: function(doc) {
+                            // Kurangi tinggi header sedikit & font yang lebih kecil agar lebih banyak ruang
+                            doc.pageOrientation = 'landscape';
+                            doc.pageSize = 'A4';
+                            doc.pageMargins = [30, 90, 30, 40]; // top sedikit dikurangi
+                            doc.defaultStyle.fontSize = 9; // turunkan font sedikit
+
+                            // HEADER muncul di setiap halaman
+                            doc.header = function(currentPage, pageCount) {
+                                return {
+                                    margin: [0, 12, 0, 6], // lebih ramping
+                                    alignment: 'center',
+                                    stack: [{
+                                            text: "PT MYASSET INDONESIA",
+                                            bold: true,
+                                            fontSize: 14
+                                        },
+                                        {
+                                            text: "ASSET MANAGEMENT DIVISION",
+                                            fontSize: 10
+                                        },
+                                        {
+                                            text: "Jl. Merdeka No. 123, Jakarta Pusat",
+                                            fontSize: 8
+                                        },
+                                        {
+                                            text: "Email: support@myasset.co.id | Telp: (021) 5544 8899",
+                                            fontSize: 8
+                                        },
+                                        {
+                                            text: "LAPORAN PENYUSUTAN ASET",
+                                            bold: true,
+                                            fontSize: 12,
+                                            margin: [0, 6, 0, 0]
+                                        }
+                                    ]
+                                };
+                            };
+
+                            // Footer tetap
+                            doc.footer = function(page, pages) {
+                                return {
+                                    margin: [30, 10, 30, 0],
+                                    columns: [{
+                                            text: "Generated: " + new Date().toLocaleDateString(),
+                                            alignment: 'left',
+                                            fontSize: 8
+                                        },
+                                        {
+                                            text: "Page " + page + " of " + pages,
+                                            alignment: 'right',
+                                            fontSize: 8
+                                        }
+                                    ]
+                                };
+                            };
+
+                            // Ambil baris yang terfilter
+                            let dt = $('#mytable').DataTable();
+                            let rowIndexes = dt.rows({
+                                search: 'applied'
+                            }).indexes().toArray();
+                            let colsToExport = [1, 4, 5, 6, 7, 8, 9, 10, 11];
+
+                            // Header tabel (sesuai gaya aset)
+                            let body = [];
+                            body.push([{
+                                    text: "Jenis Aktiva",
+                                    style: "tableHeader"
+                                },
+                                {
+                                    text: "Harga Perolehan",
+                                    style: "tableHeader"
+                                },
+                                {
+                                    text: "Bulan Perolehan",
+                                    style: "tableHeader"
+                                },
+                                {
+                                    text: "Tarif Penyusutan",
+                                    style: "tableHeader"
+                                },
+                                {
+                                    text: "Umur Ekonomis",
+                                    style: "tableHeader"
+                                },
+                                {
+                                    text: "Bulan Penyusutan",
+                                    style: "tableHeader"
+                                },
+                                {
+                                    text: "Beban Penyusutan",
+                                    style: "tableHeader"
+                                },
+                                {
+                                    text: "Akumulasi",
+                                    style: "tableHeader"
+                                },
+                                {
+                                    text: "Nilai Sisa Buku",
+                                    style: "tableHeader"
+                                }
+                            ]);
+
+                            // Isi body
+                            rowIndexes.forEach(function(rowIdx) {
+                                let cells = colsToExport.map(function(colIdx) {
+                                    let c = dt.cell(rowIdx, colIdx).data();
+                                    return $('<div>').html(c === undefined ? '-' : c).text().trim();
+                                });
+
+                                body.push([{
+                                        text: cells[0] || '-',
+                                        alignment: 'left',
+                                        margin: [6, 6, 6, 6],
+                                        fontSize: 8
+                                    },
+                                    {
+                                        text: cells[1] || '-',
+                                        alignment: 'center',
+                                        margin: [6, 6, 6, 6],
+                                        fontSize: 8
+                                    },
+                                    {
+                                        text: cells[2] || '-',
+                                        alignment: 'center',
+                                        margin: [6, 6, 6, 6],
+                                        fontSize: 8
+                                    },
+                                    {
+                                        text: cells[3] || '-',
+                                        alignment: 'center',
+                                        margin: [6, 6, 6, 6],
+                                        fontSize: 8
+                                    },
+                                    {
+                                        text: cells[4] || '-',
+                                        alignment: 'center',
+                                        margin: [6, 6, 6, 6],
+                                        fontSize: 8
+                                    },
+                                    {
+                                        text: cells[5] || '-',
+                                        alignment: 'center',
+                                        margin: [6, 6, 6, 6],
+                                        fontSize: 8
+                                    },
+                                    {
+                                        text: cells[6] || '-',
+                                        alignment: 'center',
+                                        margin: [6, 6, 6, 6],
+                                        fontSize: 8
+                                    },
+                                    {
+                                        text: cells[7] || '-',
+                                        alignment: 'center',
+                                        margin: [6, 6, 6, 6],
+                                        fontSize: 8
+                                    },
+                                    {
+                                        text: cells[8] || '-',
+                                        alignment: 'center',
+                                        margin: [6, 6, 6, 6],
+                                        fontSize: 8
+                                    }
+                                ]);
+                            });
+
+                            // Lebar kolom diatur lebih konservatif: gunakan '*' fleksibel untuk nama dan angka lebih kecil
+                            let customTableNode = {
+                                table: {
+                                    headerRows: 1,
+                                    widths: ['*', 70, 60, 60, 70, 70, 70, 70, 70],
+                                    body: body
+                                },
+                                layout: {
+                                    vLineWidth: function(i) {
+                                        return 0;
+                                    },
+                                    hLineWidth: function(i, node) {
+                                        if (i === 0 || i === node.table.body.length) return 0.35;
+                                        return 0;
+                                    },
+                                    hLineColor: function() {
+                                        return '#e0e0e0';
+                                    },
+                                    paddingLeft: function() {
+                                        return 6;
+                                    },
+                                    paddingRight: function() {
+                                        return 6;
+                                    },
+                                    paddingTop: function() {
+                                        return 6;
+                                    },
+                                    paddingBottom: function() {
+                                        return 6;
+                                    },
+                                    fillColor: function(rowIndex) {
+                                        if (rowIndex === 0) return '#0b4a6f';
+                                        return null;
+                                    }
+                                }
+                            };
+
+                            doc.styles.tableHeader = {
+                                color: 'white',
+                                bold: true,
+                                fontSize: 10,
+                                alignment: 'center'
+                            };
+
+                            // Pastikan content hanya tabel agar tak ada blok sisa
+                            doc.content = [{
+                                text: '\n'
+                            }, customTableNode];
+                        }
+                    },
+
+                    // =====================================================
+                    // =============== EXCEL (default) ======================
+                    // =====================================================
+                    {
+                        extend: 'excelHtml5',
+                        className: 'buttons-excel',
+                        title: 'Laporan Penyusutan Aset',
+                        exportOptions: {
+                            columns: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+                        }
+                    }
+                ]
             });
 
-            // ==== FILTER BULAN (kolom 8: Bulan Penyusutan) ====
+            // ==== HIDE KOLOM TANGGAL
+            table.column(10).visible(false);
+
+            // FILTER BULAN
             $('#filter-bulan').on('change', function() {
                 let bulan = this.value;
-
                 if (bulan === "") {
                     table.column(8).search("").draw();
                 } else {
@@ -215,26 +474,33 @@
                 }
             });
 
-            // ==== FILTER CABANG (kolom 2 - hidden) ====
+            // FILTER CABANG
             $('#filter-cabang').on('change', function() {
                 table.column(2).search(this.value).draw();
             });
 
-            // ==== FILTER KATEGORI (kolom 3 - hidden) ====
+            // FILTER KATEGORI
             $('#filter-kategori').on('change', function() {
                 table.column(3).search(this.value).draw();
             });
 
-            // ==== RESET FILTER ====
-            $('#reset-filter').on('click', function() {
+            // RESET FILTER
+            $('#reset-filter').on('click', function(e) {
+                e.preventDefault();
                 $('#filter-bulan').val('');
                 $('#filter-cabang').val('');
                 $('#filter-kategori').val('');
-
                 table.search('').columns().search('').draw();
+            });
+
+            // MANUAL TRIGGER EXPORT
+            $("#btn-export-pdf").on("click", function() {
+                table.button('.buttons-pdf').trigger();
+            });
+            $("#btn-export-excel").on("click", function() {
+                table.button('.buttons-excel').trigger();
             });
 
         });
     </script>
-
     <?= $this->endSection(); ?>

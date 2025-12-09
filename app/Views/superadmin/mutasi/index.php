@@ -173,19 +173,18 @@
 
     <?= $this->endSection(); ?>
 
-
     <?= $this->section('scripts'); ?>
-
     <script>
         document.addEventListener('DOMContentLoaded', function() {
 
-            // 🔥 Ambil instance DataTable yang sudah dibuat oleh script global
+            // Inisialisasi DataTable untuk tableHeader (mutasi)
             const table = $('#tableHeader').DataTable({
                 responsive: true,
                 processing: true,
                 autoWidth: false,
+                pageLength: 10,
 
-                // === default bootstrap 5 layout ===
+                // HATI-HATI: kita HAPUS 'B' dari dom sehingga DataTables tidak menaruh tombol default
                 dom: '<"row mb-2"' +
                     '<"col-12 col-md-6 mb-2"l>' +
                     '<"col-12 col-md-6 d-flex justify-content-md-end"f>' +
@@ -196,8 +195,6 @@
                     '<"col-12 col-md-6 d-flex justify-content-md-end mt-2 mt-md-0"p>' +
                     '>',
 
-                // Tambahkan opsi default disini
-                pageLength: 10,
                 language: {
                     search: "Cari:",
                     lengthMenu: "Tampilkan _MENU_ data",
@@ -207,38 +204,272 @@
                         previous: "‹",
                         next: "›"
                     }
-                }
+                },
+
+                columnDefs: [
+                    // Anda punya kolom No (0), Kode (1), Tanggal (2), Asal (3), Tujuan (4), Status (5), Aksi (6)
+                    // tetap seperti semula; ini hanya contoh jika ingin hide
+                    {
+                        targets: [],
+                        visible: true
+                    }
+                ],
+
+                // Kita tetap daftarkan buttons agar dapat dipanggil via API, namun container tidak ditampilkan
+                buttons: [{
+                        extend: 'pdfHtml5',
+                        className: 'buttons-pdf',
+                        filename: 'Laporan_Mutasi_Aset',
+                        orientation: 'landscape',
+                        pageSize: 'A4',
+                        exportOptions: {
+                            modifier: {
+                                search: 'applied'
+                            },
+                            // columns yang diexport: Kode Mutasi(1), Tanggal(2), Cabang Asal(3), Cabang Tujuan(4), Status(5)
+                            columns: [1, 2, 3, 4, 5]
+                        },
+                        customize: function(doc) {
+                            // dasar & margin sama gaya aset
+                            doc.pageOrientation = 'landscape';
+                            doc.pageSize = 'A4';
+                            doc.pageMargins = [30, 110, 30, 40];
+                            doc.defaultStyle.fontSize = 10;
+
+                            // Header perusahaan + judul — tampil di setiap halaman
+                            doc.header = function(currentPage, pageCount) {
+                                return {
+                                    margin: [0, 18, 0, 10],
+                                    alignment: 'center',
+                                    stack: [{
+                                            text: "PT MYASSET INDONESIA",
+                                            bold: true,
+                                            fontSize: 16
+                                        },
+                                        {
+                                            text: "ASSET MANAGEMENT DIVISION",
+                                            fontSize: 11
+                                        },
+                                        {
+                                            text: "Jl. Merdeka No. 123, Jakarta Pusat",
+                                            fontSize: 9
+                                        },
+                                        {
+                                            text: "Email: support@myasset.co.id | Telp: (021) 5544 8899",
+                                            fontSize: 9
+                                        },
+                                        {
+                                            text: "LAPORAN MUTASI ASET",
+                                            bold: true,
+                                            fontSize: 13,
+                                            margin: [0, 6, 0, 0]
+                                        }
+                                    ]
+                                };
+                            };
+
+                            // Footer (tanggal + page)
+                            doc.footer = function(page, pages) {
+                                return {
+                                    margin: [30, 10, 30, 0],
+                                    columns: [{
+                                            text: "Generated: " + new Date().toLocaleDateString(),
+                                            alignment: 'left',
+                                            fontSize: 9
+                                        },
+                                        {
+                                            text: "Page " + page + " of " + pages,
+                                            alignment: 'right',
+                                            fontSize: 9
+                                        }
+                                    ]
+                                };
+                            };
+
+                            // Ambil data terfilter dan bangun tabel custom
+                            let dt = $('#tableHeader').DataTable();
+                            let rowIndexes = dt.rows({
+                                search: 'applied'
+                            }).indexes().toArray();
+                            let colsToExport = [1, 2, 3, 4, 5]; // sesuai exportOptions
+
+                            // Table header (biru gelap + teks putih)
+                            let body = [];
+                            body.push([{
+                                    text: "Kode Mutasi",
+                                    style: "tableHeader"
+                                },
+                                {
+                                    text: "Tanggal",
+                                    style: "tableHeader"
+                                },
+                                {
+                                    text: "Cabang Asal",
+                                    style: "tableHeader"
+                                },
+                                {
+                                    text: "Cabang Tujuan",
+                                    style: "tableHeader"
+                                },
+                                {
+                                    text: "Status",
+                                    style: "tableHeader"
+                                }
+                            ]);
+
+                            // Isi baris
+                            rowIndexes.forEach(function(rowIdx) {
+                                let cells = colsToExport.map(function(colIdx) {
+                                    let c = dt.cell(rowIdx, colIdx).data();
+                                    return $('<div>').html(c === undefined ? 'Selesai' : c).text().trim();
+                                });
+
+                                body.push([{
+                                        text: cells[0] || 'Selesai',
+                                        alignment: 'center',
+                                        margin: [6, 6, 6, 6],
+                                        fontSize: 9
+                                    },
+                                    {
+                                        text: cells[1] || 'Selesai',
+                                        alignment: 'center',
+                                        margin: [6, 6, 6, 6],
+                                        fontSize: 9
+                                    },
+                                    {
+                                        text: cells[2] || 'Selesai',
+                                        alignment: 'center',
+                                        margin: [6, 6, 6, 6],
+                                        fontSize: 9
+                                    },
+                                    {
+                                        text: cells[3] || 'Selesai',
+                                        alignment: 'center',
+                                        margin: [6, 6, 6, 6],
+                                        fontSize: 9
+                                    },
+                                    {
+                                        text: cells[4] || 'Selesai',
+                                        alignment: 'center',
+                                        margin: [6, 6, 6, 6],
+                                        fontSize: 9
+                                    }
+                                ]);
+                            });
+
+                            // Node tabel custom: header biru gelap, body tanpa border antar baris
+                            let customTableNode = {
+                                table: {
+                                    headerRows: 1,
+                                    widths: [120, 120, '*', '*', 80],
+                                    body: body
+                                },
+                                layout: {
+                                    vLineWidth: function(i) {
+                                        return 0;
+                                    },
+                                    hLineWidth: function(i, node) {
+                                        if (i === 0 || i === node.table.body.length) return 0.4;
+                                        return 0;
+                                    },
+                                    hLineColor: function() {
+                                        return '#e0e0e0';
+                                    },
+                                    paddingLeft: function() {
+                                        return 6;
+                                    },
+                                    paddingRight: function() {
+                                        return 6;
+                                    },
+                                    paddingTop: function() {
+                                        return 6;
+                                    },
+                                    paddingBottom: function() {
+                                        return 6;
+                                    },
+                                    fillColor: function(rowIndex) {
+                                        if (rowIndex === 0) return '#0b4a6f';
+                                        return null;
+                                    }
+                                }
+                            };
+
+                            // header style
+                            doc.styles.tableHeader = {
+                                color: 'white',
+                                bold: true,
+                                fontSize: 10,
+                                alignment: 'center'
+                            };
+
+                            // Pastikan doc.content hanya berisi spacer + tabel custom (hindari blok sisa)
+                            doc.content = [{
+                                text: '\n'
+                            }, customTableNode];
+                        }
+                    },
+
+                    // Excel export — simple, kolomnya sama
+                    {
+                        extend: 'excelHtml5',
+                        className: 'buttons-excel',
+                        filename: 'Laporan_Mutasi_Aset',
+                        title: 'Laporan Mutasi Aset',
+                        exportOptions: {
+                            modifier: {
+                                search: 'applied'
+                            },
+                            columns: [1, 2, 3, 4]
+                        }
+                    }
+                ] // end buttons
+            }); // end DataTable init
+
+            // -----------------------------
+            // Hook tombol PDF/Excel di UI Anda
+            // Jika tombol punya id, ubah selector ke '#btn-export-pdf' / '#btn-export-excel'
+            // Jika tidak punya id, kita cari berdasarkan kelas dan ikon (cara ini aman)
+            // -----------------------------
+            // cari tombol PDF: btn-outline-danger yang memiliki icon bi-filetype-pdf
+            const $pdfBtn = $('.btn.btn-outline-danger:has(.bi-filetype-pdf)');
+            const $excelBtn = $('.btn.btn-outline-success:has(.bi-filetype-xls)');
+
+            // jika tidak ditemukan, coba selector generik (fallback)
+            const $pdfTrigger = $pdfBtn.length ? $pdfBtn : $('.btn:contains("PDF")');
+            const $excelTrigger = $excelBtn.length ? $excelBtn : $('.btn:contains("Excel")');
+
+            // Pasang event: trigger ekspor melalui API DataTables
+            $pdfTrigger.on('click', function(e) {
+                e.preventDefault();
+                table.button('.buttons-pdf').trigger();
+            });
+            $excelTrigger.on('click', function(e) {
+                e.preventDefault();
+                table.button('.buttons-excel').trigger();
             });
 
-
-            // ==== FILTER CABANG ASAL (kolom index 3) ====
+            // ===========================
+            // FILTERS (sudah ada) — tetap bekerja
+            // ===========================
             $('#filter-asal').on('change', function() {
                 table.column(3).search(this.value).draw();
             });
-
-            // ==== FILTER CABANG TUJUAN (kolom index 4) ====
             $('#filter-tujuan').on('change', function() {
                 table.column(4).search(this.value).draw();
             });
-
-            // ==== FILTER STATUS (kolom index 5) ====
             $('#filter-status').on('change', function() {
                 table.column(5).search(this.value).draw();
             });
 
-            // ==== FILTER TANGGAL (custom search) ====
+            // DATE RANGE FILTER (sudah ada)
             $.fn.dataTable.ext.search.push(function(settings, data) {
                 if (settings.nTable.id !== 'tableHeader') return true;
-
                 let min = $('#filter-tanggal-awal').val();
                 let max = $('#filter-tanggal-akhir').val();
                 let tglStr = data[2] || '';
-
                 if (!min && !max) return true;
                 if (!tglStr) return false;
-
                 let tgl = new Date(tglStr);
-
                 if (min) {
                     let dMin = new Date(min + ' 00:00:00');
                     if (tgl < dMin) return false;
@@ -249,23 +480,21 @@
                 }
                 return true;
             });
-
             $('#filter-tanggal-awal, #filter-tanggal-akhir').on('change', function() {
                 table.draw();
             });
 
-            // ==== RESET FILTER ====
-            $('#reset-filter').on('click', function() {
+            // RESET FILTER
+            $('#reset-filter').on('click', function(e) {
+                e.preventDefault();
                 $('#filter-asal').val('');
                 $('#filter-tujuan').val('');
                 $('#filter-status').val('');
                 $('#filter-tanggal-awal').val('');
                 $('#filter-tanggal-akhir').val('');
-
                 table.search('').columns().search('').draw();
             });
-        });
+
+        }); // DOMContentLoaded
     </script>
-
-
     <?= $this->endSection(); ?>

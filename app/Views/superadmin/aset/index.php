@@ -133,6 +133,7 @@
                                 </div>
                             </th>
                             <th>Gambar</th>
+                            <th>Kode Barang</th>
                             <th>Tanggal Input</th>
                             <th>Nama Barang</th>
                             <th>Kategori</th>
@@ -172,6 +173,7 @@
                                         class="aset-thumbnail"
                                         onerror="this.src='<?= base_url('uploads/aset/no-image.png') ?>'">
                                 </td>
+                                <td class="align-middle"><?= esc($aset['kode_aset']) ?></td>
                                 <td class="text-start align-middle">
                                     <?= date('Y-m-d', strtotime($aset['created_at'])) ?>
                                 </td>
@@ -330,7 +332,7 @@
         $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
             let start = $('#filter-tanggal-awal').val();
             let end = $('#filter-tanggal-akhir').val();
-            let tanggal = data[2];
+            let tanggal = data[3];
 
             if (!tanggal) return true;
             if (start === "" && end === "") return true;
@@ -383,211 +385,238 @@
                 // =====================================================
                 // =============== PDF PROFESIONAL ======================
                 // =====================================================
+                // === PDF (include Kode Aset) ===
                 {
                     extend: 'pdfHtml5',
                     className: 'buttons-pdf',
-                    filename: 'Laporan Aset Barang',
+                    filename: 'Laporan_Aset_Barang',
                     orientation: 'landscape',
                     pageSize: 'A4',
+
+                    // sertakan Kode (2), Tanggal (3), Nama (4), Kategori (5), Cabang (6), Status (7), Kondisi (8)
                     exportOptions: {
-                        columns: [2, 3, 4, 5, 6, 7]
+                        columns: [2, 3, 4, 5, 6, 7, 8]
                     },
 
                     customize: function(doc) {
-
-                        // ============================================
-                        //   MODE PORTRAIT
-                        // ============================================
-                        doc.pageOrientation = 'portrait';
-                        doc.pageSize = 'A4';
-
-                        // Margin agar header tidak nabrak
-                        doc.pageMargins = [30, 100, 30, 40];
-
-
-                        // ============================================
-                        //   HEADER — hanya di halaman pertama
-                        // ============================================
-                        doc['header'] = function(page) {
-                            if (page === 1) {
-                                return {
-                                    margin: [0, 25, 0, 15],
-                                    alignment: 'center',
-                                    stack: [{
-                                            text: "PT MYASSET INDONESIA",
-                                            bold: true,
-                                            fontSize: 16,
-                                            margin: [0, 0, 0, 2]
-                                        },
-                                        {
-                                            text: "ASSET MANAGEMENT DIVISION",
-                                            fontSize: 11,
-                                            margin: [0, -1, 0, 2]
-                                        },
-                                        {
-                                            text: "Jl. Merdeka No. 123, Jakarta Pusat",
-                                            fontSize: 9
-                                        },
-                                        {
-                                            text: "Email: support@myasset.co.id | Telp: (021) 5544 8899",
-                                            fontSize: 9
-                                        }
-                                    ]
-                                };
-                            }
-                            return {
-                                text: ""
-                            };
+                        // margin & dasar
+                        doc.pageMargins = [30, 110, 30, 40];
+                        doc.defaultStyle.fontSize = 10;
+                        doc.styles.tableHeader = {
+                            color: 'white',
+                            bold: true,
+                            alignment: 'center',
+                            fontSize: 10
                         };
 
-
-                        // ============================================
-                        //   TITLE – buang elemen bawaan (Kelola Aset)
-                        // ============================================
-
-                        // Hapus dulu seluruh title bawaan DataTables agar tidak muncul "Kelola Aset"
-                        doc.content = doc.content.filter(item =>
-                            !(item.text && item.text.toString().includes("Kelola Aset"))
-                        );
-
-                        // Tambahkan title baru yang rapi
-                        doc.content.unshift({
-                            text: "LAPORAN DATA ASET BARANG",
-                            alignment: "center",
-                            bold: true,
-                            fontSize: 14,
-                            margin: [0, 0, 0, 14]
-                        });
-
-
-                        // ============================================
-                        //   FOOTER
-                        // ============================================
-                        doc['footer'] = function(page, pages) {
+                        // header tetap seperti milik Anda
+                        doc['header'] = function() {
                             return {
-                                margin: [25, 10, 25, 0],
-                                columns: [{
-                                        text: "Generated: " + new Date().toLocaleDateString(),
-                                        alignment: 'left',
+                                margin: [0, 20, 0, 10],
+                                alignment: 'center',
+                                stack: [{
+                                        text: "PT MYASSET INDONESIA",
+                                        bold: true,
+                                        fontSize: 16,
+                                        margin: [0, 0, 0, 3]
+                                    },
+                                    {
+                                        text: "ASSET MANAGEMENT DIVISION",
+                                        fontSize: 11,
+                                        margin: [0, 0, 0, 3]
+                                    },
+                                    {
+                                        text: "Jl. Merdeka No. 123, Jakarta Pusat",
                                         fontSize: 9
                                     },
                                     {
-                                        text: "Page " + page + " of " + pages,
-                                        alignment: 'right',
-                                        fontSize: 9
+                                        text: "Email: support@myasset.co.id | Telp: (021) 5544 8899",
+                                        fontSize: 9,
+                                        margin: [0, 0, 0, 5]
+                                    },
+                                    {
+                                        text: "LAPORAN DATA ASET BARANG",
+                                        bold: true,
+                                        fontSize: 13,
+                                        margin: [0, 6, 0, 0]
                                     }
                                 ]
                             };
                         };
 
-
-                        // ============================================
-                        //   BUILD TABLE MANUAL
-                        // ============================================
+                        // Ambil data yang terfilter
                         let dt = $('#mytable').DataTable();
-                        let data = dt.rows({
+                        let rows = dt.rows({
                             search: 'applied'
                         }).data().toArray();
 
+                        // Build body table
                         let body = [];
-
-                        // Header
                         body.push([{
-                                text: 'Tanggal',
-                                style: 'tableHeader'
+                                text: "Kode Barang",
+                                style: "tableHeader"
                             },
                             {
-                                text: 'Nama Barang',
-                                style: 'tableHeader'
+                                text: "Tanggal",
+                                style: "tableHeader"
                             },
                             {
-                                text: 'Kategori',
-                                style: 'tableHeader'
+                                text: "Nama Barang",
+                                style: "tableHeader"
                             },
                             {
-                                text: 'Cabang',
-                                style: 'tableHeader'
+                                text: "Kategori",
+                                style: "tableHeader"
                             },
                             {
-                                text: 'Status',
-                                style: 'tableHeader'
+                                text: "Cabang",
+                                style: "tableHeader"
                             },
                             {
-                                text: 'Kondisi',
-                                style: 'tableHeader'
+                                text: "Status",
+                                style: "tableHeader"
+                            },
+                            {
+                                text: "Kondisi",
+                                style: "tableHeader"
                             }
                         ]);
 
-                        // Rows
-                        data.forEach(row => {
-                            let namaBarang = $("<div>" + row[3] + "</div>").text().trim();
-                            let status = $("<div>" + row[6] + "</div>").text().trim();
-                            let kondisi = $("<div>" + row[7] + "</div>").text().trim();
+                        rows.forEach(row => {
+                            let kode = $("<div>" + row[2] + "</div>").text().trim();
+                            let tanggal = $("<div>" + row[3] + "</div>").text().trim();
+                            let namaBarang = $("<div>" + row[4] + "</div>").text().trim();
+                            let kategori = $("<div>" + row[5] + "</div>").text().trim();
+                            let cabang = $("<div>" + row[6] + "</div>").text().trim();
+                            let status = $("<div>" + row[7] + "</div>").text().trim();
+                            let kondisi = $("<div>" + row[8] + "</div>").text().trim();
 
                             body.push([{
-                                    text: row[2],
-                                    alignment: 'center',
-                                    fontSize: 9.7,
-                                    margin: [3, 4, 3, 4]
+                                    text: kode,
+                                    alignment: "center",
+                                    margin: [6, 8, 6, 8],
+                                    fontSize: 9
+                                },
+                                {
+                                    text: tanggal,
+                                    alignment: "center",
+                                    margin: [6, 8, 6, 8],
+                                    fontSize: 9
                                 },
                                 {
                                     text: namaBarang,
-                                    alignment: 'left',
-                                    fontSize: 9.7,
-                                    margin: [3, 4, 3, 4]
+                                    alignment: "left",
+                                    margin: [6, 8, 6, 8],
+                                    fontSize: 9
                                 },
                                 {
-                                    text: row[4],
-                                    alignment: 'center',
-                                    fontSize: 9.7,
-                                    margin: [3, 4, 3, 4]
+                                    text: kategori,
+                                    alignment: "center",
+                                    margin: [6, 8, 6, 8],
+                                    fontSize: 9
                                 },
                                 {
-                                    text: row[5],
-                                    alignment: 'center',
-                                    fontSize: 9.7,
-                                    margin: [3, 4, 3, 4]
+                                    text: cabang,
+                                    alignment: "center",
+                                    margin: [6, 8, 6, 8],
+                                    fontSize: 9
                                 },
                                 {
                                     text: status,
-                                    alignment: 'center',
-                                    fontSize: 9.7,
-                                    margin: [3, 4, 3, 4]
+                                    alignment: "center",
+                                    margin: [6, 8, 6, 8],
+                                    fontSize: 9
                                 },
                                 {
                                     text: kondisi,
-                                    alignment: 'center',
-                                    fontSize: 9.7,
-                                    margin: [3, 4, 3, 4]
+                                    alignment: "center",
+                                    margin: [6, 8, 6, 8],
+                                    fontSize: 9
                                 }
                             ]);
                         });
 
-                        doc.content[doc.content.length - 1].table = {
-                            headerRows: 1,
-                            widths: [60, '*', 70, 60, 55, 55],
-                            body: body
+                        // Buat node table custom tanpa border body (hanya header diberi background)
+                        let customTableNode = {
+                            table: {
+                                headerRows: 1,
+                                widths: [90, 80, '*', 100, 90, 80, 80],
+                                body: body
+                            },
+                            layout: {
+                                // hilangkan semua garis vertikal
+                                vLineWidth: function(i, node) {
+                                    return 0;
+                                },
+                                // hilangkan garis horizontal antar baris (body), sisakan sedikit garis di atas header dan di bawah tabel
+                                hLineWidth: function(i, node) {
+                                    // i === 0 -> garis paling atas tabel (biarkan tipis)
+                                    // i === node.table.body.length -> garis paling bawah tabel (biarkan tipis)
+                                    // lainnya -> 0 (hilangkan)
+                                    if (i === 0 || i === node.table.body.length) return 0.4;
+                                    return 0;
+                                },
+                                hLineColor: function(i, node) {
+                                    return '#e0e0e0';
+                                },
+                                paddingLeft: function(i, node) {
+                                    return 8;
+                                },
+                                paddingRight: function(i, node) {
+                                    return 8;
+                                },
+                                paddingTop: function(i, node) {
+                                    return 6;
+                                },
+                                paddingBottom: function(i, node) {
+                                    return 6;
+                                },
+                                // beri background header dan striping sangat halus (opsional)
+                                fillColor: function(rowIndex, node, columnIndex) {
+                                    if (rowIndex === 0) return '#0b4a6f'; // header gelap
+                                    // striping: gunakan null untuk bersih atau warna halus jika mau
+                                    return null; // atau: (rowIndex % 2 === 0) ? '#fbfdff' : null;
+                                }
+                            }
                         };
 
-                        // Style header tabel
-                        doc.styles.tableHeader = {
-                            fillColor: '#003366',
-                            color: 'white',
-                            bold: true,
-                            alignment: 'center',
-                            fontSize: 10.5,
-                            margin: [0, 5, 0, 5]
-                        };
+                        // Ganti seluruh content agar tidak ada blok tersisa (menghindari 'tabel kecil kosong')
+                        doc.content = [
+                            // spacer untuk memberi jarak antara header pdf dan tabel
+                            {
+                                text: '\n'
+                            },
+                            customTableNode
+                        ];
 
-                        // Border tabel
-                        doc.content[doc.content.length - 1].layout = {
-                            hLineWidth: () => 0.7,
-                            vLineWidth: () => 0.7,
-                            hLineColor: () => '#cccccc',
-                            vLineColor: () => '#cccccc',
-                            paddingLeft: () => 3,
-                            paddingRight: () => 3
+                        // Footer (tetap)
+                        doc['footer'] = function(page, pages) {
+                            return {
+                                margin: [30, 10, 30, 0],
+                                columns: [{
+                                        text: "Generated: " + new Date().toLocaleDateString(),
+                                        alignment: "left",
+                                        fontSize: 9
+                                    },
+                                    {
+                                        text: "Page " + page + " of " + pages,
+                                        alignment: "right",
+                                        fontSize: 9
+                                    }
+                                ]
+                            };
                         };
+                    }
+                },
+
+
+                // === EXCEL (include Kode Aset) ===
+                {
+                    extend: 'excelHtml5',
+                    className: 'buttons-excel',
+                    title: 'Laporan Aset Barang',
+                    exportOptions: {
+                        columns: [2, 3, 4, 5, 6, 7, 8] // include Kode (2)
                     }
                 },
 
@@ -606,21 +635,21 @@
         });
 
         // ==== HIDE KOLOM TANGGAL
-        table.column(2).visible(false);
+        table.column(3).visible(false);
 
         // ==== FILTER KATEGORI
         $('#filter-kategori').on('change', function() {
-            table.column(4).search(this.value).draw();
+            table.column(5).search(this.value).draw();
         });
 
         // ==== FILTER CABANG
         $('#filter-cabang').on('change', function() {
-            table.column(5).search(this.value).draw();
+            table.column(6).search(this.value).draw();
         });
 
         // ==== FILTER KONDISI
         $('#filter-kondisi').on('change', function() {
-            table.column(7).search(this.value).draw();
+            table.column(8).search(this.value).draw();
         });
 
         // ==== FILTER TANGGAL
