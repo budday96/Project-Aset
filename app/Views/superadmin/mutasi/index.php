@@ -130,24 +130,45 @@
                                 <td><?= esc($row['cabang_tujuan']); ?></td>
                                 <td>
                                     <?php if ($row['status'] === 'pending' && in_groups('superadmin')): ?>
+                                        <!-- Pending: Kirim / Batal -->
                                         <form method="post" action="<?= site_url('superadmin/mutasi/kirim-header/' . $row['id_mutasi']); ?>" class="d-inline">
                                             <?= csrf_field(); ?>
-                                            <button class="btn btn-sm btn-warning">Kirim</button>
+                                            <button class="btn btn-sm btn-warning">
+                                                <i class="bi bi-send"></i> Kirim
+                                            </button>
                                         </form>
 
                                         <form method="post" action="<?= site_url('superadmin/mutasi/batal-header/' . $row['id_mutasi']); ?>" class="d-inline">
                                             <?= csrf_field(); ?>
-                                            <button class="btn btn-sm btn-danger">Batal</button>
+                                            <button class="btn btn-sm btn-danger">
+                                                <i class="bi bi-x-circle"></i> Batal
+                                            </button>
                                         </form>
-                                    <?php endif; ?>
 
-                                    <?php if ($row['status'] === 'dikirim' && (user()->id_cabang == $row['id_cabang_tujuan'] || in_groups('superadmin'))): ?>
+                                    <?php elseif ($row['status'] === 'dikirim' && (user()->id_cabang == $row['id_cabang_tujuan'] || in_groups('superadmin'))): ?>
+                                        <!-- Dikirim: Terima -->
                                         <form method="post" action="<?= site_url('superadmin/mutasi/terima-header/' . $row['id_mutasi']); ?>" class="d-inline">
                                             <?= csrf_field(); ?>
-                                            <button class="btn btn-sm btn-success">Terima</button>
+                                            <button class="btn btn-sm btn-success">
+                                                <i class="bi bi-check-circle"></i> Terima
+                                            </button>
                                         </form>
+
+                                    <?php elseif ($row['status'] === 'selesai'): ?>
+                                        <!-- Selesai: hanya icon -->
+                                        <span class="text-success fw-bold">
+                                            <i class="bi bi-check2-circle fs-5"></i> Selesai
+                                        </span>
+
+                                    <?php else: ?>
+                                        <!-- Jika tidak ada aksi lain -->
+                                        <span class="text-secondary">
+                                            <i class="bi bi-check-circle text-success"></i>
+                                        </span>
+
                                     <?php endif; ?>
                                 </td>
+
                                 <td class="text-center">
                                     <!-- Tombol View -->
                                     <a href="<?= site_url('superadmin/mutasi/' . $row['id_mutasi']); ?>"

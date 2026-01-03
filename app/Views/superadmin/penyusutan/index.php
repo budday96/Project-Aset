@@ -158,9 +158,14 @@
                                 <td><?= number_format($item['beban_penyusutan_bulan'], 3, ',', '.'); ?></td>
                                 <td><?= number_format($item['akumulasi_sampai_bulan_ini'], 3, ',', '.'); ?></td>
                                 <td><?= number_format($item['nilai_buku'], 3, ',', '.'); ?></td>
-                                <td>
-                                    <a href="<?= site_url('superadmin/penyusutan/detail/' . $item['id_aset']); ?>" class="btn btn-sm btn-primary">
-                                        Detail
+                                <td class="text-center">
+                                    <!-- Tombol View -->
+                                    <a href="<?= site_url('superadmin/penyusutan/detail/' . $item['id_aset']); ?>"
+                                        class="btn btn-sm"
+                                        data-bs-toggle="tooltip"
+                                        data-bs-placement="top"
+                                        title="Detail Penyusutan">
+                                        <i class="bi bi-eye" style="color: #fd7e14;"></i>
                                     </a>
                                 </td>
                             </tr>
