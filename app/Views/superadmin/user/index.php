@@ -92,7 +92,7 @@
                                             class="btn btn-sm"
                                             data-bs-toggle="tooltip"
                                             data-bs-placement="top"
-                                            title="View">
+                                            title="Detail">
                                             <i class="bi bi-eye" style="color: #fd7e14;"></i>
                                         </a>
 

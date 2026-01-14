@@ -11,6 +11,11 @@ $routes->get('/', 'Home::index');
 //     return view('errors/html/custom_404');
 // });
 
+$routes->get('login', 'Auth\LoginController::login');
+$routes->post('login', 'Auth\LoginController::attemptLogin');
+$routes->get('logout', 'Auth\LoginController::logout');
+
+
 $routes->group('superadmin', ['filter' => 'role:superadmin'], function ($routes) {
 
     $routes->get('aset/getMasterAset', 'Superadmin\Aset::getMasterAset');
@@ -176,6 +181,9 @@ $routes->group('p', function ($routes) {
 
 $routes->group('admin', ['filter' => 'role:admin'], function ($routes) {
 
+    // Dashboard
+    $routes->get('dashboard', 'Admin\Dashboard::index');
+
     // Kelola Aset
     $routes->get('aset', 'Admin\Aset::index');
     $routes->get('aset/create', 'Admin\Aset::create');
@@ -209,27 +217,19 @@ $routes->group('admin', ['filter' => 'role:admin'], function ($routes) {
     $routes->post('profile/update', 'Admin\Profile::update');
 
     // User Management
+
+    // User Management - Admin Cabang
     $routes->get('user', 'Admin\UserManagement::index');
     $routes->get('user/create', 'Admin\UserManagement::create');
     $routes->post('user/store', 'Admin\UserManagement::store');
-    // $routes->get('user/edit', 'Admin\UserManagement::edit');
-    // $routes->get('user/detail', 'Admin\UserManagement::detail');
-    $routes->get('user/detail/(:num)', 'Admin\UserManagement::detail/$1');
     $routes->get('user/edit/(:num)', 'Admin\UserManagement::edit/$1');
+    $routes->get('user/detail/(:num)', 'Admin\UserManagement::detail/$1');
     $routes->post('user/update/(:num)', 'Admin\UserManagement::update/$1');
-    $routes->post('user/toggle/(:num)', 'Admin\UserManagement::toggleActive/$1');
     $routes->post('user/delete/(:num)', 'Admin\UserManagement::delete/$1');
+    $routes->post('user/toggle/(:num)', 'Admin\UserManagement::toggleActive/$1');
 });
 
 $routes->group('user', ['filter' => 'role:user'], function ($routes) {
-    // Kelola Aset
-    $routes->get('aset', 'User\Aset::index');
-    $routes->get('aset/create', 'User\Aset::create');
-    $routes->post('aset/store', 'User\Aset::store');
-    $routes->get('aset/edit', 'User\Aset::edit');
-    $routes->get('aset/detail', 'User\Aset::detail');
-    $routes->get('aset/edit/(:num)', 'User\Aset::edit/$1');
-    $routes->post('aset/update/(:num)', 'User\Aset::update/$1');
-    $routes->get('aset/detail/(:num)', 'User\Aset::detail/$1');
-    $routes->post('aset/delete/(:num)', 'User\Aset::delete/$1');
+    // Dashboard
+    $routes->get('dashboard', 'User\Dashboard::index');
 });

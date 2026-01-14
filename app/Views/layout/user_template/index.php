@@ -38,8 +38,8 @@
 </head>
 
 <body>
-    <?= $this->include('layout/admin_template/sidebar'); ?>
-    <?= $this->include('layout/admin_template/topbar'); ?>
+    <?= $this->include('layout/user_template/sidebar'); ?>
+    <?= $this->include('layout/user_template/topbar'); ?>
 
     <main>
         <div class="c2g-container">

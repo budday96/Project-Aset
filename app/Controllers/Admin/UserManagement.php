@@ -11,10 +11,6 @@ class UserManagement extends BaseController
 {
     protected $userModel;
     protected $groupModel;
-    protected $adminCabangId;   // cabang milik admin yang login
-    // pakai name yang stabil
-    private string $defaultRoleName = 'user';
-    private ?int $defaultRoleId = null; // cache
 
     public function __construct()
     {
@@ -22,163 +18,137 @@ class UserManagement extends BaseController
         $this->groupModel = new GroupModel();
     }
 
-    protected function getAdminCabangId(): ?int
-    {
-        // asumsi helper user() aktif (Myth\Auth)
-        return user()->id_cabang ?? null;
-    }
-
-    private function getDefaultRoleId(): int
-    {
-        if ($this->defaultRoleId !== null) {
-            return $this->defaultRoleId;
-        }
-        $role = $this->groupModel->select('id')->where('name', $this->defaultRoleName)->first();
-        if (!$role || empty($role->id)) {
-            // tangani rapi kalau seed group belum ada
-            throw new \RuntimeException('Grup "user" tidak ditemukan. Seed auth_groups terlebih dulu.');
-        }
-        return $this->defaultRoleId = (int) $role->id;
-    }
-
-    protected function ensureSameBranchOrAbort($targetUser): void
-    {
-        if (!$targetUser || (int)$targetUser->id_cabang !== (int)$this->adminCabangId) {
-            // Admin hanya boleh kelola user di cabangnya
-            // Ubah redirect tujuan jika path Anda berbeda
-            redirect()->to('/admin/user')->with('error', 'Tidak diizinkan: berbeda cabang')->send();
-            exit; // pastikan stop flow
-        }
-    }
-
+    /**
+     * List user hanya di cabang admin
+     */
     public function index()
     {
-        $this->adminCabangId = $this->getAdminCabangId();
+        $idCabang = user()->id_cabang;
 
-        // Tampilkan hanya user di cabang admin & sembunyikan admin/superadmin
         $users = $this->userModel
             ->select('users.*, ag.name as group_name')
             ->join('auth_groups_users agu', 'agu.user_id = users.id', 'inner')
-            ->join('auth_groups ag', 'ag.id = agu.group_id', 'left')
-            ->where('users.id_cabang', $this->adminCabangId)
-            ->whereNotIn('ag.name', ['admin', 'superadmin']) // admin tidak boleh kelola role ini
+            ->join('auth_groups ag', 'ag.id = agu.group_id', 'inner')
+            ->where('users.id_cabang', $idCabang)
+            ->where('ag.name', 'user') // ⬅️ HANYA USER BIASA
             ->orderBy('users.id', 'DESC')
             ->findAll();
 
-        // hitung pending (user tanpa grup) tapi hanya di cabang admin
-        $db = \Config\Database::connect();
-        $builder = $db->table('users');
-        $builder->select('users.id');
-        $builder->join('auth_groups_users agu', 'agu.user_id = users.id', 'left');
-        $builder->where('users.id_cabang', $this->adminCabangId);
-        $builder->where('agu.group_id IS NULL', null, false);
-        $pendingCount = $builder->countAllResults();
-
         return view('admin/user/index', [
-            'title'        => 'Manajemen Pengguna Cabang',
-            'users'        => $users,
-            'pendingCount' => $pendingCount
+            'title' => 'Manajemen User Cabang',
+            'users' => $users
         ]);
     }
 
+
+    /**
+     * Form tambah user cabang
+     */
     public function create()
     {
-        $this->adminCabangId = $this->getAdminCabangId();
-
-        // Admin tidak memilih cabang & role—dikunci otomatis
         return view('admin/user/create', [
-            'title'       => 'Tambah User Cabang',
-            'cabang_name' => user()->nama_cabang ?? '-', // opsional untuk ditampilkan saja
+            'title' => 'Tambah User Cabang'
         ]);
     }
 
+    /**
+     * Simpan user baru (langsung aktif, tanpa approval)
+     */
     public function store()
     {
-        $this->adminCabangId = $this->getAdminCabangId();
         $data = $this->request->getPost();
 
-        // VALIDASI: tanpa role & id_cabang (dikunci)
         if (!$this->validate([
             'full_name' => 'required',
             'email'     => 'required|valid_email|is_unique[users.email]',
             'username'  => 'required|is_unique[users.username]',
             'password'  => 'required|min_length[6]',
         ])) {
-            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+            return redirect()->back()->withInput()
+                ->with('errors', $this->validator->getErrors());
         }
 
-        // insert user ke cabang admin
         $userId = $this->userModel->insert([
             'email'         => $data['email'],
             'username'      => $data['username'],
             'full_name'     => $data['full_name'],
             'password_hash' => Password::hash($data['password']),
-            'id_cabang'     => $this->adminCabangId,
-            'active'        => 1,
+            'id_cabang'     => user()->id_cabang, // ⬅ AUTO CABANG
+            'active'        => 1,                  // ⬅ LANGSUNG AKTIF
         ]);
 
-        // pakai ID yang sudah di-cache
-        $this->groupModel->addUserToGroup($userId, $this->getDefaultRoleId());
+        // Role default user cabang
+        $group = $this->groupModel
+            ->where('name', 'user')
+            ->first();
 
-        return redirect()->to('/admin/user')->with('success', 'User cabang berhasil ditambahkan');
+        if ($group) {
+            $this->groupModel->addUserToGroup($userId, $group->id);
+        }
+
+
+        return redirect()->to('/admin/user')
+            ->with('success', 'User cabang berhasil ditambahkan');
     }
 
+    /**
+     * Edit user cabang (tidak boleh lintas cabang)
+     */
     public function edit($id = null)
     {
         if (empty($id)) {
             return redirect()->to('/admin/user')->with('error', 'Parameter tidak valid');
         }
 
-        $this->adminCabangId = $this->getAdminCabangId();
-
         $user = $this->userModel->find($id);
-        $this->ensureSameBranchOrAbort($user);
 
-        // Cegah edit user dengan role admin/superadmin
-        $groups = $this->groupModel->getGroupsForUser($id);
-        $roleName = $groups[0]['name'] ?? null;
-        if (in_array($roleName, ['admin', 'superadmin'])) {
-            return redirect()->to('/admin/user')->with('error', 'Tidak diizinkan mengubah akun admin/superadmin');
+        if (!$user || $user->id_cabang != user()->id_cabang) {
+            return redirect()->to('/admin/user')->with('error', 'Akses ditolak');
         }
 
-        // View admin tidak boleh mengubah role & cabang
         return view('admin/user/edit', [
             'title' => 'Edit User Cabang',
-            'user'  => $user,
+            'user'  => $user
         ]);
     }
 
+    /**
+     * Update user cabang
+     */
     public function update($id)
     {
-        $this->adminCabangId = $this->getAdminCabangId();
         $data = $this->request->getPost();
-
         $user = $this->userModel->find($id);
-        $this->ensureSameBranchOrAbort($user);
 
-        $groups = $this->groupModel->getGroupsForUser($id);
-        $roleName = $groups[0]['name'] ?? null;
-        if (in_array($roleName, ['admin', 'superadmin'])) {
-            return redirect()->to('/admin/user')->with('error', 'Tidak diizinkan mengubah akun admin/superadmin');
+        if (!$user || $user->id_cabang != user()->id_cabang) {
+            return redirect()->to('/admin/user')->with('error', 'Akses ditolak');
         }
 
         $rules = [
             'full_name' => 'required',
         ];
 
-        // Email/username unique jika berubah
-        $rules['email']    = ($user->email !== $data['email']) ? 'required|valid_email|is_unique[users.email]' : 'required|valid_email';
-        $rules['username'] = ($user->username !== $data['username']) ? 'required|is_unique[users.username]' : 'required';
+        if ($user->email !== $data['email']) {
+            $rules['email'] = 'required|valid_email|is_unique[users.email]';
+        } else {
+            $rules['email'] = 'required|valid_email';
+        }
+
+        if ($user->username !== $data['username']) {
+            $rules['username'] = 'required|is_unique[users.username]';
+        } else {
+            $rules['username'] = 'required';
+        }
 
         if (!$this->validate($rules)) {
-            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+            return redirect()->back()->withInput()
+                ->with('errors', $this->validator->getErrors());
         }
 
         $updateData = [
             'full_name' => $data['full_name'],
             'email'     => $data['email'],
             'username'  => $data['username'],
-            // 'id_cabang' TIDAK diizinkan berubah oleh admin
         ];
 
         if (!empty($data['password'])) {
@@ -190,8 +160,8 @@ class UserManagement extends BaseController
             $this->userModel->save($user);
         }
 
-        // Role tidak diubah oleh admin
-        return redirect()->to('/admin/user')->with('success', 'User cabang berhasil diperbarui');
+        return redirect()->to('/admin/user')
+            ->with('success', 'User berhasil diperbarui');
     }
 
     public function detail($id = null)
@@ -200,19 +170,27 @@ class UserManagement extends BaseController
             return redirect()->to('/admin/user')->with('error', 'Parameter tidak valid');
         }
 
-        $this->adminCabangId = $this->getAdminCabangId();
         $user = $this->userModel->find($id);
-        $this->ensureSameBranchOrAbort($user);
 
-        $db = \Config\Database::connect();
-        $builder = $db->table('auth_groups_users')
-            ->select('auth_groups.name, auth_groups.description')
-            ->join('auth_groups', 'auth_groups.id = auth_groups_users.group_id')
-            ->where('auth_groups_users.user_id', $id)
-            ->get()
-            ->getRow();
+        // Proteksi cabang + data
+        if (
+            !$user ||
+            $user->id_cabang != user()->id_cabang
+        ) {
+            return redirect()->to('/admin/user')->with('error', 'Akses ditolak');
+        }
 
-        $groupName = $builder->name ?? 'Tidak diketahui';
+        // Ambil group user
+        $groups = $this->groupModel->getGroupsForUser($id);
+        $groupName = $groups[0]['name'] ?? 'Tidak diketahui';
+
+        // Admin hanya boleh lihat detail USER biasa
+        if ($groupName !== 'user') {
+            return redirect()->to('/admin/user')->with(
+                'error',
+                'Anda tidak memiliki akses ke detail akun ini'
+            );
+        }
 
         return view('admin/user/detail', [
             'title'      => 'Detail User Cabang',
@@ -221,40 +199,72 @@ class UserManagement extends BaseController
         ]);
     }
 
+
+    /**
+     * Hapus user cabang
+     */
     public function delete($id)
     {
-        $this->adminCabangId = $this->getAdminCabangId();
-
         $user = $this->userModel->find($id);
-        $this->ensureSameBranchOrAbort($user);
 
+        if (
+            !$user ||
+            $user->id_cabang != user()->id_cabang ||
+            $user->id == user()->id
+        ) {
+            return redirect()->to('/admin/user')->with('error', 'Akses ditolak');
+        }
+
+        // Ambil group user
         $groups = $this->groupModel->getGroupsForUser($id);
-        $roleName = $groups[0]['name'] ?? null;
-        if (in_array($roleName, ['admin', 'superadmin'])) {
-            return redirect()->to('/admin/user')->with('error', 'Tidak diizinkan menghapus admin/superadmin');
+
+        // Pastikan hanya user biasa
+        if (empty($groups) || $groups[0]['name'] !== 'user') {
+            return redirect()->to('/admin/user')->with(
+                'error',
+                'Anda hanya dapat menghapus user biasa'
+            );
         }
 
         $this->groupModel->removeUserFromAllGroups($id);
         $this->userModel->delete($id);
 
-        return redirect()->to('/admin/user')->with('success', 'User cabang berhasil dihapus');
+        return redirect()->to('/admin/user')
+            ->with('success', 'User berhasil dihapus');
     }
 
+
+    /**
+     * Toggle aktif / nonaktif user cabang
+     */
     public function toggleActive($id)
     {
-        $this->adminCabangId = $this->getAdminCabangId();
-
         $user = $this->userModel->find($id);
-        $this->ensureSameBranchOrAbort($user);
 
-        $groups = $this->groupModel->getGroupsForUser($id);
-        $roleName = $groups[0]['name'] ?? null;
-        if (in_array($roleName, ['admin', 'superadmin'])) {
-            return redirect()->to('/admin/user')->with('error', 'Tidak diizinkan mengubah status admin/superadmin');
+        if (
+            !$user ||
+            $user->id_cabang != user()->id_cabang ||
+            $user->id == user()->id
+        ) {
+            return redirect()->to('/admin/user')->with('error', 'Akses ditolak');
         }
 
-        $this->userModel->update($id, ['active' => $user->active ? 0 : 1]);
+        // Ambil group user
+        $groups = $this->groupModel->getGroupsForUser($id);
 
-        return redirect()->to('/admin/user')->with('success', 'Status user cabang diperbarui');
+        // Pastikan hanya user biasa
+        if (empty($groups) || $groups[0]['name'] !== 'user') {
+            return redirect()->to('/admin/user')->with(
+                'error',
+                'Anda hanya dapat mengubah status user biasa'
+            );
+        }
+
+        $this->userModel->update($id, [
+            'active' => $user->active ? 0 : 1
+        ]);
+
+        return redirect()->to('/admin/user')
+            ->with('success', 'Status user diperbarui');
     }
 }

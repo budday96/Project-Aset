@@ -41,6 +41,8 @@
         $penggunaPatterns = [
             'admin/user',
             'admin/user/*',
+            'admin/userapproval',
+            'admin/userapproval/*',
         ];
         ?>
         <li>
@@ -61,6 +63,13 @@
                             <i class="bi bi-person-plus"></i>Kelola User
                         </a>
                     </li>
+
+                    <!-- HANYA aktif untuk /admin/userapproval atau /admin/userapproval/... -->
+                    <li class="<?= is_active(['admin/userapproval', 'admin/userapproval/*']) ?>">
+                        <a href="<?= base_url('admin/userapproval'); ?>">
+                            <i class="bi bi-person-check"></i>User Approval
+                        </a>
+                    </li>
                 </div>
             </ul>
         </li>
@@ -68,8 +77,16 @@
         <!-- Master Data -->
         <?php
         $masterPatterns = [
+            'admin/master-aset*',
             'admin/kategori*',
             'admin/subkategori*',
+            'admin/atribut*',
+        ];
+
+        // Grup pola untuk menandai "Sub Kategori" aktif
+        $subkategoriPatterns = [
+            'admin/subkategori*',
+            'admin/atribut*',
         ];
         ?>
         <li>
@@ -84,12 +101,17 @@
             </button>
             <ul class="c2g-sub-menu <?= is_open($masterPatterns) ?>">
                 <div>
+                    <li class="<?= is_active('admin/master-aset*') ?>">
+                        <a href="<?= base_url('admin/master-aset'); ?>">
+                            <i class="bi bi-tag"></i>Nama Aset
+                        </a>
+                    </li>
                     <li class="<?= is_active('admin/kategori*') ?>">
                         <a href="<?= base_url('admin/kategori'); ?>">
                             <i class="bi bi-grid"></i>Kategori
                         </a>
                     </li>
-                    <li class="<?= is_active('admin/subkategori*') ?>">
+                    <li class="<?= is_active($subkategoriPatterns) ?>">
                         <a href="<?= base_url('admin/subkategori'); ?>">
                             <i class="bi bi-grid-1x2"></i>Sub Kategori
                         </a>
@@ -98,11 +120,32 @@
             </ul>
         </li>
 
+        <?php
+        $mutasiPatterns = [
+            'admin/mutasi*',
+            'admin/riwayat-mutasi*',
+        ];
+
+        // Grup pola untuk menandai "Mutasi" aktif (termasuk riwayat-mutasi)
+        $submutasiPatterns = [
+            'admin/mutasi*',
+            'admin/riwayat-mutasi*',
+        ];
+        ?>
+
         <!-- Mutasi Aset -->
-        <li class="<?= is_active('admin/mutasi*') ?>">
+        <li class="<?= is_active($mutasiPatterns) ?>">
             <a href="<?= base_url('admin/mutasi'); ?>">
                 <i class="bi bi-arrow-left-right"></i>
                 <span>Mutasi Aset</span>
+            </a>
+        </li>
+
+        <!-- Mutasi Aset -->
+        <li class="<?= is_active('admin/penyusutan*') ?>">
+            <a href="<?= base_url('admin/penyusutan'); ?>">
+                <i class="bi bi-graph-down"></i>
+                <span>Penyusutan Aset</span>
             </a>
         </li>
 
