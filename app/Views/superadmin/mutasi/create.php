@@ -109,8 +109,6 @@
                         Centang aset yang ingin dipindahkan, kemudian isi jumlah mutasi. Sistem otomatis memvalidasi stok & cabang.
                     </p>
 
-                    <h6 class="fw-bold mb-2">Step 3 — Pilih Aset untuk Dimutasi</h6>
-
                     <div class="row justify-content-end mb-2">
                         <div class="col-12 col-md-6 col-lg-4">
                             <div class="input-group">
@@ -148,7 +146,6 @@
                                         </td>
                                         <td>
                                             <strong><?= esc($a['kode_aset']); ?></strong><br>
-                                            <small class="text-muted"><?= esc($a['nama_master']); ?></small>
                                         </td>
                                         <td><?= esc($a['nama_master']); ?></td>
                                         <td><?= esc($a['nama_kategori']); ?></td>

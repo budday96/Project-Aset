@@ -1,25 +1,18 @@
 <?= $this->extend('layout/admin_template/index'); ?>
 <?= $this->section('content'); ?>
 
-<?php if (session()->getFlashdata('success')): ?>
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        <?= session()->getFlashdata('success') ?>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-<?php endif; ?>
-
-<?php if (session()->getFlashdata('error')): ?>
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        <?= session()->getFlashdata('error') ?>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-<?php endif; ?>
-
 <div class="card shadow-sm mb-4">
     <div class="card-body">
         <div class="text-center mb-4">
-            <img src="<?= base_url('/img/' . $user->user_image); ?>" alt="<?= esc($user->username); ?>"
-                class="rounded-circle shadow mb-3 border border-3 border-primary" width="150" height="150" style="object-fit: cover;">
+            <?php
+            $avatar = $user->user_image ?: 'default.jpg';
+            ?>
+            <img src="<?= base_url('/img/' . $avatar); ?>"
+                alt="<?= esc($user->username); ?>"
+                class="rounded-circle shadow mb-3 border border-3 border-primary"
+                width="150" height="150"
+                style="object-fit: cover;">
+
             <h4 class="fw-bold mb-0"><?= esc($user->full_name); ?></h4>
             <p class="text-muted mb-2">@<?= esc($user->username); ?></p>
         </div>
@@ -42,7 +35,7 @@
                         <span><i class="bi bi-shield-lock me-2"></i><strong>Role:</strong></span>
                         <?php
                         $badgeClass = 'secondary';
-                        if ($group_name == 'superadmin') {
+                        if ($group_name == 'admin') {
                             $badgeClass = 'danger';
                         } elseif ($group_name == 'admin') {
                             $badgeClass = 'success';

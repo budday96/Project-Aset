@@ -78,6 +78,7 @@
         <?php
         $masterPatterns = [
             'superadmin/cabang*',
+            'superadmin/kelompokharta*',
             'superadmin/master-aset*',
             'superadmin/kategori*',
             'superadmin/subkategori*',
@@ -105,6 +106,11 @@
                     <li class="<?= is_active('superadmin/cabang*') ?>">
                         <a href="<?= base_url('superadmin/cabang'); ?>">
                             <i class="bi bi-buildings"></i>Cabang
+                        </a>
+                    </li>
+                    <li class="<?= is_active('superadmin/kelompokharta*') ?>">
+                        <a href="<?= base_url('superadmin/kelompokharta'); ?>">
+                            <i class="bi bi-collection"></i>kelompok harta
                         </a>
                     </li>
                     <li class="<?= is_active('superadmin/master-aset*') ?>">
@@ -152,6 +158,20 @@
             <a href="<?= base_url('superadmin/penyusutan'); ?>">
                 <i class="bi bi-graph-down"></i>
                 <span>Penyusutan Aset</span>
+            </a>
+        </li>
+        <!-- Pengajuan Aset -->
+        <li class="<?= is_active('superadmin/pengajuan*') ?>">
+            <a href="<?= base_url('superadmin/pengajuan'); ?>">
+            <i class="bi bi-file-earmark-plus"></i>
+            <span>Pengajuan Aset</span>
+            </a>
+        </li>
+        <!-- Pelaporan Aset -->
+        <li class="<?= is_active('superadmin/pelaporan*') ?>">
+            <a href="<?= base_url('superadmin/pelaporan'); ?>">
+            <i class="bi bi-file-earmark-text"></i>
+            <span>Pelaporan Aset</span>
             </a>
         </li>
 

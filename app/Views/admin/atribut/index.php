@@ -1,46 +1,38 @@
-<?= $this->extend('layout/superadmin_template/index') ?>
+<?= $this->extend('layout/admin_template/index') ?>
 <?= $this->section('content') ?>
 
 <div class="card">
     <div class="card-body">
         <div class="card-header bg-white py-3 px-4">
             <!-- TOP BAR: TITLE + ACTION BUTTONS -->
-            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3">
+            <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between mb-3 gap-2">
 
                 <!-- TITLE -->
-                <h4 class="fw-bold mb-3 mb-md-0 text-center text-md-start w-100">
-                    List Subkategori
-                </h4>
-
-                <!-- BUTTON GROUP -->
-                <div class="d-flex flex-wrap gap-2 w-100 w-md-auto justify-content-center justify-content-md-end">
-
-                    <!-- EXPORT PDF -->
-                    <button id="btn-export-pdf" class="btn btn-outline-danger btn-sm" data-bs-toggle="tooltip" title="Export PDF">
-                        <i class="bi bi-filetype-pdf fs-5"></i>
-                    </button>
-
-                    <!-- EXPORT EXCEL -->
-                    <button id="btn-export-excel" class="btn btn-outline-success btn-sm" data-bs-toggle="tooltip" title="Export Excel">
-                        <i class="bi bi-filetype-xls fs-5"></i>
-                    </button>
-
-                    <!-- REFRESH -->
-                    <a href="<?= base_url('/superadmin/subkategori'); ?>"
-                        class="btn btn-outline-secondary btn-sm"
-                        data-bs-toggle="tooltip" title="Refresh">
-                        <i class="bi bi-arrow-clockwise fs-5"></i>
-                    </a>
-
-                    <!-- TAMBAH Subkategori -->
-                    <a class="btn btn-warning btn-sm fw-semibold d-flex align-items-center justify-content-center px-2"
-                        href="<?= base_url('superadmin/subkategori/create') ?>">
-
-                        <i class="bi bi-plus-circle me-1 fs-5"></i>
-                        <span class="text-truncate">Tambah Subkategori</span>
-                    </a>
+                <div class="order-2 order-md-1 w-100 text-center text-md-start">
+                    <h4 class="fw-bold m-0">List <?= $title; ?></h4>
                 </div>
+
+                <!-- BUTTON GROUP (Kembali + Tambah Atribut) -->
+                <div class="order-1 order-md-2 d-flex flex-wrap gap-2 w-100 w-md-auto justify-content-center justify-content-md-end">
+
+                    <!-- KEMBALI -->
+                    <a class="btn btn-light border btn-sm fw-semibold d-flex align-items-center gap-2 shadow-sm hover-lift px-3"
+                        href="<?= base_url('admin/subkategori') ?>">
+                        <i class="bi bi-arrow-left-circle fs-5"></i>
+                        <span>Kembali</span>
+                    </a>
+
+                    <!-- TAMBAH ATRIBUT -->
+                    <a class="btn btn-warning btn-sm fw-semibold d-flex align-items-center justify-content-center px-3"
+                        href="<?= base_url('admin/atribut/' . $sub['id_subkategori'] . '/create') ?>">
+                        <i class="bi bi-plus-circle me-1 fs-5"></i>
+                        <span>Tambah Atribut</span>
+                    </a>
+
+                </div>
+
             </div>
+
         </div>
         <div class="card-body px-0">
             <div class="table-responsive rounded mb-3">
@@ -53,34 +45,36 @@
                                     <label for="checkbox1" class="mb-0"></label>
                                 </div>
                             </th>
-                            <th>Kategori</th>
-                            <th>Subkategori</th>
-                            <th>Atribut</th>
+                            <th>Nama</th>
+                            <th>Tipe</th>
+                            <th>Wajib</th>
+                            <th>Satuan</th>
                             <th style="width:160px">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($subkategoris as $s): ?>
+                        <?php foreach ($atributs as $a): ?>
                             <tr>
-                                <td class="align-middle">
+                                <td>
                                     <div class="checkbox d-inline-block">
-                                        <?php $checkboxId = 'checkbox_' . $s['id_subkategori']; ?>
+                                        <?php $checkboxId = 'checkbox_' . $a['id_atribut']; ?>
                                         <input type="checkbox"
                                             class="checkbox-input"
                                             id="<?= $checkboxId ?>"
                                             name="selected[]"
-                                            value="<?= $s['id_subkategori'] ?>">
+                                            value="<?= $a['id_atribut'] ?>">
                                         <label for="<?= $checkboxId ?>" class="mb-0"></label>
                                     </div>
                                 </td>
-                                <td><?= esc($s['nama_kategori']) ?></td>
-                                <td><?= esc($s['nama_subkategori']) ?></td>
-                                <td><a class="btn btn-outline-secondary btn-sm" href="<?= base_url('superadmin/atribut/' . $s['id_subkategori']) ?>">Kelola</a></td>
+                                <td><?= esc($a['nama_atribut']) ?></td>
+                                <td><?= esc($a['tipe_input']) ?></td>
+                                <td><?= $a['is_required'] ? 'Ya' : 'Tidak' ?></td>
+                                <td><?= esc($a['satuan']) ?></td>
                                 <td class="text-center align-middle">
                                     <div class="d-flex justify-content-center align-items-center list-action">
 
                                         <!-- Tombol Edit -->
-                                        <a href="<?= base_url('superadmin/subkategori/' . $s['id_subkategori'] . '/edit') ?>"
+                                        <a href="<?= base_url('admin/atribut/edit/' . $a['id_atribut']) ?>"
                                             class="btn btn-sm"
                                             data-bs-toggle="tooltip"
                                             data-bs-placement="top"
@@ -89,10 +83,10 @@
                                         </a>
 
                                         <!-- Tombol Delete -->
-                                        <form action="<?= base_url('superadmin/subkategori/' . $s['id_subkategori'] . '/delete') ?>"
+                                        <form action="<?= base_url('admin/atribut/delete/' . $a['id_atribut']) ?>"
                                             method="post"
                                             class="d-inline"
-                                            onsubmit="return confirm('Hapus subkategori ini?')">
+                                            onsubmit="return confirm('Hapus atribut ini?')">
                                             <?= csrf_field() ?>
                                             <button type="submit"
                                                 class="btn btn-sm"

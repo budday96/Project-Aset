@@ -21,16 +21,7 @@ $routes->group('superadmin', ['filter' => 'role:superadmin'], function ($routes)
     $routes->get('aset/getMasterAset', 'Superadmin\Aset::getMasterAset');
     $routes->get('aset/detailMaster/(:num)', 'Superadmin\Aset::detailMaster/$1');
 
-
     $routes->get('superadmin/aset/qr/(:num)', 'Barcode::qr/$1');
-
-    // CRUD Atribut
-    $routes->get('atribut/(:num)',         'Superadmin\Atribut::index/$1');   // $1=id_subkategori
-    $routes->get('atribut/(:num)/create',  'Superadmin\Atribut::create/$1');
-    $routes->post('atribut/store',         'Superadmin\Atribut::store');
-    $routes->get('atribut/edit/(:num)',    'Superadmin\Atribut::edit/$1');    // $1=id_atribut
-    $routes->post('atribut/update/(:num)', 'Superadmin\Atribut::update/$1');
-    $routes->post('atribut/delete/(:num)', 'Superadmin\Atribut::delete/$1');
 
     // Dashboard
     $routes->get('dashboard', 'Superadmin\Dashboard::index');
@@ -93,6 +84,14 @@ $routes->group('superadmin', ['filter' => 'role:superadmin'], function ($routes)
     $routes->post('subkategori/(:num)/delete', 'Superadmin\Subkategori::delete/$1');
     $routes->get('subkategori/restore/(:num)', 'Superadmin\Subkategori::restore/$1');
     $routes->get('subkategori/purge/(:num)',   'Superadmin\Subkategori::purge/$1');
+
+    // CRUD Atribut
+    $routes->get('atribut/(:num)',         'Superadmin\Atribut::index/$1');   // $1=id_subkategori
+    $routes->get('atribut/(:num)/create',  'Superadmin\Atribut::create/$1');
+    $routes->post('atribut/store',         'Superadmin\Atribut::store');
+    $routes->get('atribut/edit/(:num)',    'Superadmin\Atribut::edit/$1');    // $1=id_atribut
+    $routes->post('atribut/update/(:num)', 'Superadmin\Atribut::update/$1');
+    $routes->post('atribut/delete/(:num)', 'Superadmin\Atribut::delete/$1');
 
     // Kelola Aset
     $routes->get('aset', 'Superadmin\Aset::index');
@@ -195,22 +194,79 @@ $routes->group('admin', ['filter' => 'role:admin'], function ($routes) {
     $routes->get('aset/detail/(:num)', 'Admin\Aset::detail/$1');
     $routes->post('aset/delete/(:num)', 'Admin\Aset::delete/$1');
 
-    // Kelola Kategori
+    // Kategori Aset
     $routes->get('kategori', 'Admin\KategoriAset::index');
+    $routes->get('kategori/trash', 'Admin\KategoriAset::trash');
     $routes->get('kategori/create', 'Admin\KategoriAset::create');
     $routes->post('kategori/store', 'Admin\KategoriAset::store');
-    $routes->get('kategori/edit', 'Admin\KategoriAset::edit');
     $routes->get('kategori/edit/(:num)', 'Admin\KategoriAset::edit/$1');
     $routes->post('kategori/update/(:num)', 'Admin\KategoriAset::update/$1');
     $routes->post('kategori/delete/(:num)', 'Admin\KategoriAset::delete/$1');
+    $routes->get('kategori/restore/(:num)', 'Admin\KategoriAset::restore/$1');
+
+    // AJAX
+    $routes->get('subkategori/by-kategori/(:num)', 'Admin\AsetAjax::subkategoriByKategori/$1');
+    $routes->get('atribut/by-subkategori/(:num)',  'Admin\AsetAjax::atributBySubkategori/$1');
+
+    // CRUD Subkategori
+    $routes->get('subkategori',                'Admin\Subkategori::index');
+    $routes->get('subkategori/trash',          'Admin\Subkategori::trash');
+    $routes->get('subkategori/create',         'Admin\Subkategori::create');
+    $routes->post('subkategori/store',         'Admin\Subkategori::store');
+    $routes->get('subkategori/(:num)/edit',    'Admin\Subkategori::edit/$1');
+    $routes->post('subkategori/(:num)/update', 'Admin\Subkategori::update/$1');
+    $routes->post('subkategori/(:num)/delete', 'Admin\Subkategori::delete/$1');
+    $routes->get('subkategori/restore/(:num)', 'Admin\Subkategori::restore/$1');
+    $routes->get('subkategori/purge/(:num)',   'Admin\Subkategori::purge/$1');
+
+    // CRUD Atribut
+    $routes->get('atribut/(:num)',         'Admin\Atribut::index/$1');   // $1=id_subkategori
+    $routes->get('atribut/(:num)/create',  'Admin\Atribut::create/$1');
+    $routes->post('atribut/store',         'Admin\Atribut::store');
+    $routes->get('atribut/edit/(:num)',    'Admin\Atribut::edit/$1');    // $1=id_atribut
+    $routes->post('atribut/update/(:num)', 'Admin\Atribut::update/$1');
+    $routes->post('atribut/delete/(:num)', 'Admin\Atribut::delete/$1');
+
+    // Master Aset
+    $routes->get('master-aset',                 'Admin\MasterAset::index');
+    $routes->get('master-aset/trash',           'Admin\MasterAset::trash');
+    $routes->get('master-aset/create',          'Admin\MasterAset::create');
+    $routes->post('master-aset/store',          'Admin\MasterAset::store');
+    $routes->get('master-aset/detail/(:num)',   'Admin\MasterAset::detail/$1');
+    $routes->get('master-aset/edit/(:num)',     'Admin\MasterAset::edit/$1');
+    $routes->post('master-aset/update/(:num)',  'Admin\MasterAset::update/$1');
+    $routes->post('master-aset/delete/(:num)',  'Admin\MasterAset::delete/$1');
+
+    $routes->post('master-aset/restore/(:num)', 'Admin\MasterAset::restore/$1');
+    $routes->post('master-aset/purge/(:num)',   'Admin\MasterAset::purge/$1');
+
+    // AJAX Master-Detail Aset
+    $routes->get('aset/ajaxMasterDetail/(:num)', 'Admin\Aset::ajaxMasterDetail/$1');
+
+    $routes->get('aset/getMasterAset', 'Admin\Aset::getMasterAset');
+    $routes->get('aset/detailMaster/(:num)', 'Admin\Aset::detailMaster/$1');
+
+    // Kelola Aset
+    $routes->get('aset', 'Admin\Aset::index');
+    $routes->get('aset/create', 'Admin\Aset::create');
+    $routes->post('aset/store', 'Admin\Aset::store');
+    $routes->get('aset/edit/(:num)', 'Admin\Aset::edit/$1');
+    $routes->post('aset/update/(:num)', 'Admin\Aset::update/$1');
+    $routes->get('aset/detail/(:num)', 'Admin\Aset::detail/$1');
+    $routes->post('aset/delete/(:num)', 'Admin\Aset::delete/$1');
+
+    // Master Aset Pintasan
+    $routes->get('master-aset/subkategori/(:num)', 'Admin\MasterAset::ajaxSubkategori/$1');   // GET list subkategori by kategori
+    $routes->post('master-aset/quick-store', 'Admin\MasterAset::quickStore');                  // POST create master cepat (AJAX)
 
     // Mutasi Aset
-    $routes->get('mutasi',     'Admin\MutasiAset::index');
-    $routes->get('mutasi/create',     'Admin\MutasiAset::create');
-    $routes->post('mutasi/store',     'Admin\MutasiAset::store');
-    $routes->post('mutasi/kirim/(:num)',    'Admin\MutasiAset::kirim/$1');
-    $routes->post('mutasi/terima/(:num)',   'Admin\MutasiAset::terima/$1');
-    $routes->post('mutasi/batalkan/(:num)', 'Admin\MutasiAset::batalkan/$1');
+    $routes->get('mutasi',              'Admin\MutasiAset::index');
+    $routes->get('mutasi/create',       'Admin\MutasiAset::create');
+    $routes->post('mutasi/store',       'Admin\MutasiAset::store');
+    $routes->get('mutasi/(:num)',       'Admin\MutasiAset::show/$1');
+    $routes->post('mutasi/kirim-header/(:num)', 'Admin\MutasiAset::kirimHeader/$1');
+    $routes->post('mutasi/batal-header/(:num)', 'Admin\MutasiAset::batalHeader/$1');
+    $routes->post('mutasi/terima-header/(:num)', 'Admin\MutasiAset::terimaHeader/$1');
 
     // Profile
     $routes->get('profile', 'Admin\Profile::index');

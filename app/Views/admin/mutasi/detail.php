@@ -1,4 +1,4 @@
-<?= $this->extend('layout/superadmin_template/index'); ?>
+<?= $this->extend('layout/admin_template/index'); ?>
 <?= $this->section('content'); ?>
 
 <div class="card fade-in">
@@ -12,7 +12,7 @@
                     <button id="btn-export-pdf-detail" class="btn btn-outline-light btn-sm me-2" data-bs-toggle="tooltip" title="Export ke PDF">
                         <i class="bi bi-filetype-pdf"></i> <span class="d-none d-md-inline">PDF</span>
                     </button>
-                    <a href="<?= site_url('superadmin/mutasi'); ?>" class="btn btn-outline-light btn-sm" data-bs-toggle="tooltip" title="Kembali ke Daftar Mutasi">
+                    <a href="<?= site_url('admin/mutasi'); ?>" class="btn btn-outline-light btn-sm" data-bs-toggle="tooltip" title="Kembali ke Daftar Mutasi">
                         <i class="bi bi-arrow-left"></i> <span class="d-none d-md-inline">Kembali</span>
                     </a>
                 </div>

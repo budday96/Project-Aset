@@ -1,5 +1,5 @@
-<?= $this->extend('layout/superadmin_template/index') ?>
-<?= $this->section('content') ?>
+<?= $this->extend('layout/admin_template/index'); ?>
+<?= $this->section('content'); ?>
 
 <div class="card">
     <div class="card-body">
@@ -9,7 +9,7 @@
 
                 <!-- TITLE -->
                 <h4 class="fw-bold mb-3 mb-md-0 text-center text-md-start w-100">
-                    List Subkategori
+                    List Master Aset
                 </h4>
 
                 <!-- BUTTON GROUP -->
@@ -26,18 +26,18 @@
                     </button>
 
                     <!-- REFRESH -->
-                    <a href="<?= base_url('/superadmin/subkategori'); ?>"
+                    <a href="<?= base_url('/admin/master-aset'); ?>"
                         class="btn btn-outline-secondary btn-sm"
                         data-bs-toggle="tooltip" title="Refresh">
                         <i class="bi bi-arrow-clockwise fs-5"></i>
                     </a>
 
-                    <!-- TAMBAH Subkategori -->
+                    <!-- TAMBAH User -->
                     <a class="btn btn-warning btn-sm fw-semibold d-flex align-items-center justify-content-center px-2"
-                        href="<?= base_url('superadmin/subkategori/create') ?>">
+                        href="<?= base_url('admin/master-aset/create') ?>">
 
                         <i class="bi bi-plus-circle me-1 fs-5"></i>
-                        <span class="text-truncate">Tambah Subkategori</span>
+                        <span class="text-truncate">Tambah Master Aset</span>
                     </a>
                 </div>
             </div>
@@ -45,7 +45,7 @@
         <div class="card-body px-0">
             <div class="table-responsive rounded mb-3">
                 <table class="table table-hover datatable-myasset">
-                    <thead class="bg-white text-uppercase">
+                    <thead class="bg-white">
                         <tr class="ligth ligth-data">
                             <th>
                                 <div class="checkbox d-inline-block">
@@ -53,34 +53,43 @@
                                     <label for="checkbox1" class="mb-0"></label>
                                 </div>
                             </th>
+                            <th>Nama Master</th>
                             <th>Kategori</th>
                             <th>Subkategori</th>
-                            <th>Atribut</th>
-                            <th style="width:160px">Aksi</th>
+                            <th>Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($subkategoris as $s): ?>
+                        <?php foreach ($items as $i => $r): ?>
                             <tr>
                                 <td class="align-middle">
                                     <div class="checkbox d-inline-block">
-                                        <?php $checkboxId = 'checkbox_' . $s['id_subkategori']; ?>
+                                        <?php $checkboxId = 'checkbox_' . $r['id_master_aset']; ?>
                                         <input type="checkbox"
                                             class="checkbox-input"
                                             id="<?= $checkboxId ?>"
                                             name="selected[]"
-                                            value="<?= $s['id_subkategori'] ?>">
+                                            value="<?= $r['id_master_aset'] ?>">
                                         <label for="<?= $checkboxId ?>" class="mb-0"></label>
                                     </div>
                                 </td>
-                                <td><?= esc($s['nama_kategori']) ?></td>
-                                <td><?= esc($s['nama_subkategori']) ?></td>
-                                <td><a class="btn btn-outline-secondary btn-sm" href="<?= base_url('superadmin/atribut/' . $s['id_subkategori']) ?>">Kelola</a></td>
+                                <td class="align-middle"><?= esc($r['nama_master']) ?></td>
+                                <td class="align-middle"><?= esc($r['nama_kategori'] ?? '-') ?></td>
+                                <td class="align-middle"><?= esc($r['nama_subkategori'] ?? '-') ?></td>
                                 <td class="text-center align-middle">
                                     <div class="d-flex justify-content-center align-items-center list-action">
 
+                                        <!-- Tombol View -->
+                                        <a href="<?= base_url('admin/master-aset/detail/' . $r['id_master_aset']) ?>"
+                                            class="btn btn-sm"
+                                            data-bs-toggle="tooltip"
+                                            data-bs-placement="top"
+                                            title="View">
+                                            <i class="bi bi-eye" style="color: #fd7e14;"></i>
+                                        </a>
+
                                         <!-- Tombol Edit -->
-                                        <a href="<?= base_url('superadmin/subkategori/' . $s['id_subkategori'] . '/edit') ?>"
+                                        <a href="<?= base_url('admin/master-aset/edit/' . $r['id_master_aset']) ?>"
                                             class="btn btn-sm"
                                             data-bs-toggle="tooltip"
                                             data-bs-placement="top"
@@ -89,10 +98,10 @@
                                         </a>
 
                                         <!-- Tombol Delete -->
-                                        <form action="<?= base_url('superadmin/subkategori/' . $s['id_subkategori'] . '/delete') ?>"
+                                        <form action="<?= base_url('admin/master-aset/delete/' . $r['id_master_aset']) ?>"
                                             method="post"
                                             class="d-inline"
-                                            onsubmit="return confirm('Hapus subkategori ini?')">
+                                            onsubmit="return confirm('Hapus master aset ini?')">
                                             <?= csrf_field() ?>
                                             <button type="submit"
                                                 class="btn btn-sm"
@@ -112,5 +121,4 @@
         </div>
     </div>
 </div>
-
-<?= $this->endSection() ?>
+<?= $this->endSection(); ?>

@@ -4,193 +4,396 @@ namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
 use App\Models\MutasiAsetModel;
+use App\Models\MutasiAsetDetailModel;
 use App\Models\AsetModel;
 use App\Models\CabangModel;
-use CodeIgniter\Database\Exceptions\DatabaseException;
+use CodeIgniter\Exceptions\PageNotFoundException;
 
 class MutasiAset extends BaseController
 {
     protected $mutasiModel;
+    protected $detailModel;
     protected $asetModel;
     protected $cabangModel;
-    protected $db;
 
     public function __construct()
     {
-        $this->mutasiModel = new MutasiAsetModel();
-        $this->asetModel   = new AsetModel();
-        $this->cabangModel = new CabangModel();
-        $this->db          = db_connect();
-        helper('auth'); // pastikan user_id() ada
+        $this->mutasiModel  = new MutasiAsetModel();
+        $this->detailModel  = new MutasiAsetDetailModel();
+        $this->asetModel    = new AsetModel();
+        $this->cabangModel  = new CabangModel();
     }
 
-    /** List: pisahkan keluar/masuk agar fokus ke cabang user */
+    /** Generate kode mutasi: MT-YYYYMMDD-0001 */
+    protected function generateKodeMutasi(int $idMutasi): string
+    {
+        return sprintf("MT-%s-%04d", date('Ymd'), $idMutasi);
+    }
+
     public function index()
     {
-        $idCabang = user()->id_cabang;
+        $idCabang = (int) user()->id_cabang;
 
-        $keluar = $this->mutasiModel
-            ->select('mutasi_aset.*, aset.nama_aset, c1.nama_cabang AS cabang_asal, c2.nama_cabang AS cabang_tujuan')
-            ->join('aset',    'aset.id_aset = mutasi_aset.id_aset')
-            ->join('cabang c1', 'c1.id_cabang = mutasi_aset.dari_cabang')
-            ->join('cabang c2', 'c2.id_cabang = mutasi_aset.ke_cabang')
-            ->where('mutasi_aset.dari_cabang', $idCabang)
-            ->orderBy('mutasi_aset.id_mutasi', 'DESC')
+        $items = $this->mutasiModel
+            ->select('mutasi_aset.*, c1.nama_cabang AS cabang_asal, c2.nama_cabang AS cabang_tujuan')
+            ->join('cabang c1', 'c1.id_cabang = mutasi_aset.id_cabang_asal')
+            ->join('cabang c2', 'c2.id_cabang = mutasi_aset.id_cabang_tujuan')
+            ->groupStart()
+            ->where('mutasi_aset.id_cabang_asal', $idCabang)
+            ->orWhere('mutasi_aset.id_cabang_tujuan', $idCabang)
+            ->groupEnd()
+            ->orderBy('mutasi_aset.tanggal_mutasi', 'DESC')
             ->findAll();
 
-        $masuk = $this->mutasiModel
-            ->select('mutasi_aset.*, aset.nama_aset, c1.nama_cabang AS cabang_asal, c2.nama_cabang AS cabang_tujuan')
-            ->join('aset',    'aset.id_aset = mutasi_aset.id_aset')
-            ->join('cabang c1', 'c1.id_cabang = mutasi_aset.dari_cabang')
-            ->join('cabang c2', 'c2.id_cabang = mutasi_aset.ke_cabang')
-            ->where('mutasi_aset.ke_cabang', $idCabang)
-            ->orderBy('mutasi_aset.id_mutasi', 'DESC')
-            ->findAll();
+        // Ambil nama cabang user login
+        $cabangUser = $this->cabangModel
+            ->where('id_cabang', $idCabang)
+            ->get()
+            ->getRow();
 
         return view('admin/mutasi/index', [
-            'title'  => 'Mutasi Aset',
-            'keluar' => $keluar,
-            'masuk'  => $masuk,
+            'title' => 'Mutasi Aset Antar Cabang',
+            'items' => $items,
+            'cabangUser'  => $cabangUser
         ]);
     }
 
     public function create()
     {
-        $idCabang = user()->id_cabang;
-        $data['title']   = 'Mutasi Aset Baru';
-        $data['asets']   = $this->asetModel->where('id_cabang', $idCabang)->findAll();
-        $data['cabangs'] = $this->cabangModel->where('id_cabang !=', $idCabang)->findAll();
-        return view('admin/mutasi/create', $data);
+        $idCabangAsal = (int) user()->id_cabang;
+
+        $asets = $this->asetModel
+            ->where('aset.deleted_at IS NULL', null, false)
+            ->where('aset.id_cabang', $idCabangAsal)
+            ->select('aset.*, master_aset.nama_master, kategori_aset.nama_kategori')
+            ->join('master_aset', 'master_aset.id_master_aset = aset.id_master_aset', 'left')
+            ->join('kategori_aset', 'kategori_aset.id_kategori = aset.id_kategori', 'left')
+            ->orderBy('aset.kode_aset', 'ASC')
+            ->findAll();
+
+        return view('admin/mutasi/create', [
+            'title'              => 'Mutasi Aset Antar Cabang',
+            'cabangs'            => $this->cabangModel
+                ->where('id_cabang !=', $idCabangAsal)
+                ->orderBy('nama_cabang', 'ASC')
+                ->findAll(),
+            'asets'              => $asets,
+            'selectedCabangAsal' => $idCabangAsal, // hidden / readonly di view
+        ]);
     }
 
-    /** Cek ada mutasi aktif (pending/dikirim) untuk aset tsb */
-    private function hasActiveMutation(int $idAset): bool
-    {
-        return (bool) $this->mutasiModel
-            ->where('id_aset', $idAset)
-            ->whereIn('status', ['pending', 'dikirim'])
-            ->first();
-    }
 
+    /** -----------------------------------------------------------
+     *  STORE = HANYA BUAT MUTASI. TIDAK MEMINDAHKAN ASET.
+     * ----------------------------------------------------------- */
     public function store()
     {
-        $idCabangPengaju = (int) user()->id_cabang;
-        $idAset  = (int) $this->request->getPost('id_aset');
-        $keCabang = (int) $this->request->getPost('ke_cabang');
-        $ket     = (string) $this->request->getPost('keterangan');
+        $idCabangAsal = (int) user()->id_cabang;
 
-        // Validasi dasar
-        if (!$idAset || !$keCabang) {
-            return redirect()->back()->withInput()->with('error', 'Aset dan cabang tujuan wajib diisi.');
-        }
-        if ($keCabang === $idCabangPengaju) {
-            return redirect()->back()->withInput()->with('error', 'Cabang tujuan tidak boleh sama dengan cabang asal.');
+        $rules = [
+            'id_cabang_tujuan' => 'required|integer',
+        ];
+
+        if (!$this->validate($rules)) {
+            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
-        // Validasi aset milik cabang pengaju
-        $aset = $this->asetModel->find($idAset);
-        if (!$aset || (int)$aset['id_cabang'] !== $idCabangPengaju) {
-            return redirect()->back()->withInput()->with('error', 'Aset tidak ditemukan atau bukan milik cabang Anda.');
+        $idCabangTujuan = (int) $this->request->getPost('id_cabang_tujuan');
+
+        if ($idCabangAsal === $idCabangTujuan) {
+            return redirect()->back()->withInput()->with('error', 'Cabang asal dan tujuan tidak boleh sama.');
         }
 
-        // Validasi cabang tujuan eksis
-        if (!$this->cabangModel->find($keCabang)) {
-            return redirect()->back()->withInput()->with('error', 'Cabang tujuan tidak valid.');
+        $itemsRaw = $this->request->getPost('items');
+        if (!is_array($itemsRaw) || empty($itemsRaw)) {
+            return redirect()->back()->withInput()->with('error', 'Tidak ada aset yang dipilih.');
         }
 
-        // Cegah dobel mutasi aktif
-        if ($this->hasActiveMutation($idAset)) {
-            return redirect()->back()->withInput()->with('error', 'Aset ini sudah memiliki mutasi yang belum selesai.');
+        // Normalisasi + validasi aset milik cabang
+        $items = [];
+        foreach ($itemsRaw as $idAset => $row) {
+            if (!empty($row['checked']) && (int)$row['qty'] > 0) {
+
+                $aset = $this->asetModel
+                    ->where('id_aset', (int)$idAset)
+                    ->where('id_cabang', $idCabangAsal)
+                    ->where('deleted_at IS NULL', null, false)
+                    ->first();
+
+                if (!$aset) {
+                    return redirect()->back()->withInput()
+                        ->with('error', 'Aset tidak valid atau bukan milik cabang Anda.');
+                }
+
+                if ((int)$row['qty'] > (int)$aset['stock']) {
+                    return redirect()->back()->withInput()
+                        ->with('error', 'Qty melebihi stok aset.');
+                }
+
+                $items[] = [
+                    'id_aset' => (int)$idAset,
+                    'qty'     => (int)$row['qty'],
+                    'ket'     => $row['keterangan'] ?? null,
+                ];
+            }
         }
 
-        $this->mutasiModel->insert([
-            'id_aset'       => $idAset,
-            'dari_cabang'   => $idCabangPengaju,
-            'ke_cabang'     => $keCabang,
-            'keterangan'    => $ket,
-            'status'        => 'pending',
-            'dibuat_oleh'   => user_id(),
-            'tanggal_mutasi' => date('Y-m-d H:i:s'),
-        ]);
-
-        return redirect()->to('/admin/mutasi')->with('success', 'Mutasi berhasil diajukan.');
-    }
-
-    /** (Opsional) Step pengiriman oleh cabang asal */
-    public function kirim(int $id)
-    {
-        $idCabang = (int) user()->id_cabang;
-
-        // Hanya cabang asal & status pending yang bisa "kirim"
-        $updated = $this->mutasiModel
-            ->where([
-                'id_mutasi'   => $id,
-                'dari_cabang' => $idCabang,
-                'status'      => 'pending',
-            ])->set(['status' => 'dikirim'])
-            ->update();
-
-        if ($this->mutasiModel->db->affectedRows() < 1) {
-            return redirect()->back()->with('error', 'Mutasi tidak dapat dikirim. Pastikan status masih pending dan milik cabang Anda.');
+        if (empty($items)) {
+            return redirect()->back()->withInput()->with('error', 'Minimal satu aset harus dipilih.');
         }
-        return redirect()->back()->with('success', 'Mutasi telah dikirim ke cabang tujuan.');
-    }
 
-    /** Terima mutasi oleh cabang tujuan — ATOMIK */
-    public function terima(int $id)
-    {
-        $idCabang = (int) user()->id_cabang;
+        $db = \Config\Database::connect();
+        $db->transStart();
 
-        $this->db->transBegin();
         try {
-            // Lock-by-condition: pastikan masih pending/dikirim & milik cabang tujuan
-            $ok = $this->mutasiModel
-                ->where([
-                    'id_mutasi' => $id,
-                    'ke_cabang' => $idCabang,
-                ])
-                ->whereIn('status', ['pending', 'dikirim'])
-                ->set([
-                    'status'        => 'diterima',
-                    'diterima_oleh' => user_id(),
-                    'diterima_pada' => date('Y-m-d H:i:s'),
-                ])->update();
+            $idMutasi = $this->mutasiModel->insert([
+                'kode_mutasi'       => '',
+                'tanggal_mutasi'    => date('Y-m-d H:i:s'),
+                'id_cabang_asal'    => $idCabangAsal,
+                'id_cabang_tujuan'  => $idCabangTujuan,
+                'status'            => 'pending',
+                'created_by'        => user()->id,
+                'updated_by'        => user()->id,
+            ], true);
 
-            if ($this->mutasiModel->db->affectedRows() < 1) {
-                $this->db->transRollback();
-                return redirect()->back()->with('error', 'Mutasi tidak valid atau sudah diproses.');
+            $this->mutasiModel->update($idMutasi, [
+                'kode_mutasi' => $this->generateKodeMutasi($idMutasi),
+            ]);
+
+            foreach ($items as $item) {
+                $this->detailModel->insert([
+                    'id_mutasi'    => $idMutasi,
+                    'id_aset_asal' => $item['id_aset'],
+                    'qty'          => $item['qty'],
+                    'keterangan'   => $item['ket'],
+                ]);
             }
 
-            // Ambil row mutasi untuk id_aset & ke_cabang
-            $mutasi = $this->mutasiModel->find($id);
-
-            // Pindahkan kepemilikan aset
-            $this->asetModel->update($mutasi['id_aset'], ['id_cabang' => $mutasi['ke_cabang']]);
-
-            $this->db->transCommit();
-            return redirect()->back()->with('success', 'Mutasi aset telah diterima.');
-        } catch (DatabaseException $e) {
-            $this->db->transRollback();
-            return redirect()->back()->with('error', 'Gagal memproses mutasi: ' . $e->getMessage());
+            $db->transComplete();
+        } catch (\Throwable $e) {
+            $db->transRollback();
+            return redirect()->back()->withInput()->with('error', $e->getMessage());
         }
+
+        return redirect()->to('/admin/mutasi')->with('success', 'Mutasi berhasil dibuat (pending).');
     }
 
-    /** (Opsional) Batalkan mutasi oleh cabang asal saat masih pending */
-    public function batalkan(int $id)
+    /** -----------------------------------------------------------
+     *  KIRIM = ubah status pending → dikirim
+     * ----------------------------------------------------------- */
+    public function kirimHeader($id)
     {
-        $idCabang = (int) user()->id_cabang;
-
-        $this->mutasiModel
-            ->where([
-                'id_mutasi'   => $id,
-                'dari_cabang' => $idCabang,
-                'status'      => 'pending',
-            ])->set(['status' => 'dibatalkan'])
-            ->update();
-
-        if ($this->mutasiModel->db->affectedRows() < 1) {
-            return redirect()->back()->with('error', 'Mutasi tidak dapat dibatalkan (bukan milik cabang Anda atau sudah diproses).');
+        $mutasi = $this->mutasiModel->find($id);
+        if ((int)$mutasi['id_cabang_asal'] !== (int)user()->id_cabang) {
+            return redirect()->back()->with('error', 'Anda bukan cabang asal.');
         }
-        return redirect()->back()->with('success', 'Mutasi dibatalkan.');
+
+        if (!$mutasi) return redirect()->back()->with('error', 'Mutasi tidak ditemukan.');
+
+        if ($mutasi['status'] !== 'pending')
+            return redirect()->back()->with('error', 'Mutasi bukan pending.');
+
+        $this->mutasiModel->update($id, [
+            'status'     => 'dikirim',
+            'updated_by' => user()->id,
+        ]);
+
+        return redirect()->back()->with('success', 'Mutasi dikirim ke cabang tujuan.');
+    }
+
+    /** -----------------------------------------------------------
+     *  BATAL
+     * ----------------------------------------------------------- */
+    public function batalHeader($id)
+    {
+        $mutasi = $this->mutasiModel->find($id);
+        if ((int)$mutasi['id_cabang_asal'] !== (int)user()->id_cabang) {
+            return redirect()->back()->with('error', 'Anda bukan cabang asal.');
+        }
+
+        if (!$mutasi) return redirect()->back()->with('error', 'Mutasi tidak ditemukan.');
+
+        if ($mutasi['status'] !== 'pending')
+            return redirect()->back()->with('error', 'Hanya pending yang bisa dibatalkan.');
+
+        $this->mutasiModel->update($id, [
+            'status'     => 'dibatalkan',
+            'updated_by' => user()->id,
+        ]);
+
+        return redirect()->back()->with('success', 'Mutasi berhasil dibatalkan.');
+    }
+
+    /** -----------------------------------------------------------
+     *  TERIMA MUTASI = pindahkan aset di sini!
+     * ----------------------------------------------------------- */
+    public function terimaHeader($id)
+    {
+        $mutasi = $this->mutasiModel->find($id);
+        if (!$mutasi) return redirect()->back()->with('error', 'Mutasi tidak ditemukan.');
+
+        if ($mutasi['status'] !== 'dikirim')
+            return redirect()->back()->with('error', 'Mutasi belum dikirim.');
+
+        // hanya cabang tujuan yang boleh menerima
+        if ((int)user()->id_cabang !== (int)$mutasi['id_cabang_tujuan']) {
+            return redirect()->back()->with('error', 'Anda bukan cabang tujuan.');
+        }
+
+
+        $db = \Config\Database::connect();
+        $db->transException(true)->transStart();
+
+        try {
+            $details = $this->detailModel->where('id_mutasi', $id)->findAll();
+
+            foreach ($details as $d) {
+                $asetAsal = $this->asetModel->withDeleted()->find($d['id_aset_asal']);
+                $qty      = (int)$d['qty'];
+
+                if (!$asetAsal) {
+                    throw new \RuntimeException('Aset asal tidak ditemukan.');
+                }
+
+                // CARI ASET TUJUAN (master sama)
+                $asetTujuan = $this->asetModel
+                    ->withDeleted()
+                    ->where('id_master_aset', $asetAsal['id_master_aset'])
+                    ->where('id_cabang', $mutasi['id_cabang_tujuan'])
+                    ->first();
+
+                /** ------------------
+                 * 1. Jika TUJUAN SUDAH PUNYA → tambah stok
+                 * ------------------ */
+                if ($asetTujuan) {
+
+                    if (!empty($asetTujuan['deleted_at'])) {
+                        $this->asetModel->update($asetTujuan['id_aset'], [
+                            'deleted_at' => null,
+                            'deleted_by' => null
+                        ]);
+                    }
+
+                    // tambah stok tujuan
+                    $this->asetModel->update($asetTujuan['id_aset'], [
+                        'stock' => (int)$asetTujuan['stock'] + $qty
+                    ]);
+
+                    // kurangi stok asal
+                    $newStock = (int)$asetAsal['stock'] - $qty;
+                    $this->asetModel->update($asetAsal['id_aset'], ['stock' => $newStock]);
+
+                    // stok habis → arsipkan
+                    if ($newStock <= 0) {
+                        $this->asetModel->update($asetAsal['id_aset'], [
+                            'deleted_at' => date('Y-m-d H:i:s'),
+                            'deleted_by' => user()->id,
+                        ]);
+                    }
+
+                    continue;
+                }
+
+                /** ------------------
+                 * 2. Jika mutasi penuh (qty == stok asal)
+                 * ------------------ */
+                if ($qty == $asetAsal['stock']) {
+
+                    // pindah cabang
+                    $this->asetModel->update($asetAsal['id_aset'], [
+                        'id_cabang' => $mutasi['id_cabang_tujuan'],
+                    ]);
+
+                    continue;
+                }
+
+                /** ------------------
+                 * 3. Mutasi sebagian (buat aset baru)
+                 * ------------------ */
+                $qrNew   = bin2hex(random_bytes(16));
+                $kodeNew = $asetAsal['kode_aset'] . '-S' . $id;
+
+                $newId = $this->asetModel->insert([
+                    'kode_aset'      => $kodeNew,
+                    'qr_token'       => $qrNew,
+                    'id_master_aset' => $asetAsal['id_master_aset'],
+                    'id_kategori'    => $asetAsal['id_kategori'],
+                    'id_subkategori' => $asetAsal['id_subkategori'],
+                    'id_cabang'      => $mutasi['id_cabang_tujuan'],
+                    'stock'          => $qty,
+                    'kondisi'        => $asetAsal['kondisi'],
+                    'gambar'         => $asetAsal['gambar'],
+                ], true);
+
+                // copy atribut
+                if ($db->tableExists('aset_atribut')) {
+                    $rows = $db->table('aset_atribut')->where('id_aset', $asetAsal['id_aset'])->get()->getResultArray();
+                    $batch = [];
+                    foreach ($rows as $r) {
+                        $batch[] = [
+                            'id_aset'    => $newId,
+                            'id_atribut' => $r['id_atribut'],
+                            'nilai'      => $r['nilai']
+                        ];
+                    }
+                    if ($batch) {
+                        $db->table('aset_atribut')->insertBatch($batch);
+                    }
+                }
+
+                // kurangi stok asal
+                $this->asetModel->update($asetAsal['id_aset'], [
+                    'stock' => (int)$asetAsal['stock'] - $qty
+                ]);
+            }
+
+            // UPDATE STATUS
+            $this->mutasiModel->update($id, [
+                'status' => 'diterima'
+            ]);
+
+            $db->transComplete();
+        } catch (\Throwable $e) {
+            $db->transRollback();
+            return redirect()->back()->with('error', $e->getMessage());
+        }
+
+        return redirect()->back()->with('success', 'Mutasi berhasil diterima.');
+    }
+
+    public function show($id)
+    {
+        $id = (int) $id;
+        $header = $this->mutasiModel
+            ->select('mutasi_aset.*, c1.nama_cabang AS cabang_asal, c2.nama_cabang AS cabang_tujuan')
+            ->join('cabang c1', 'c1.id_cabang = mutasi_aset.id_cabang_asal')
+            ->join('cabang c2', 'c2.id_cabang = mutasi_aset.id_cabang_tujuan')
+            ->where('id_mutasi', $id)
+            ->first();
+
+        if (!$header) {
+            return redirect()->to('/admin/mutasi')->with('error', 'Data mutasi tidak ditemukan.');
+        }
+
+        if (
+            (int)$header['id_cabang_asal'] !== (int)user()->id_cabang &&
+            (int)$header['id_cabang_tujuan'] !== (int)user()->id_cabang
+        ) {
+            return redirect()->to('/admin/mutasi')->with('error', 'Akses ditolak.');
+        }
+
+
+        $details = $this->detailModel
+            ->select('mutasi_aset_detail.*, aset.kode_aset, master_aset.nama_master AS nama_master')
+            ->join('aset', 'aset.id_aset = mutasi_aset_detail.id_aset_asal')
+            ->join('master_aset', 'master_aset.id_master_aset = aset.id_master_aset', 'left')
+            ->where('id_mutasi', $id)
+            ->findAll();
+
+        return view('admin/mutasi/detail', [
+            'title'   => 'Detail Mutasi Aset',
+            'header'  => $header,
+            'details' => $details,
+        ]);
     }
 }

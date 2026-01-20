@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Controllers\Superadmin;
+namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
 use App\Models\MasterAsetModel;
@@ -25,7 +25,7 @@ class MasterAset extends BaseController
             'title' => 'Master Aset',
             'items' => $this->masterModel->withJoin()->orderBy('id_master_aset', 'DESC')->findAll(),
         ];
-        return view('superadmin/master_aset/index', $data);
+        return view('admin/master_aset/index', $data);
     }
 
     // Arsip (yang sudah di-soft delete)
@@ -36,7 +36,7 @@ class MasterAset extends BaseController
             ->orderBy('deleted_at', 'DESC')
             ->findAll();
 
-        return view('superadmin/master_aset/trash', [
+        return view('admin/master_aset/trash', [
             'title' => 'Arsip Master Aset',
             'items' => $items,
         ]);
@@ -49,7 +49,7 @@ class MasterAset extends BaseController
             'kategoris' => $this->kategoriModel->findAll(),
             'kelompokHarta' => $this->kelompokModel->findAll(),
         ];
-        return view('superadmin/master_aset/create', $data);
+        return view('admin/master_aset/create', $data);
     }
 
     public function store()
@@ -134,14 +134,14 @@ class MasterAset extends BaseController
             return redirect()->back()->withInput()->with('error', 'Gagal insert master: ' . $e->getMessage());
         }
 
-        return redirect()->to('/superadmin/master-aset')->with('success', 'Master aset dibuat.');
+        return redirect()->to('/admin/master-aset')->with('success', 'Master aset dibuat.');
     }
 
     public function edit($id)
     {
         $row = $this->masterModel->withJoin()->where('id_master_aset', (int)$id)->first();
         if (!$row) {
-            return redirect()->to('/superadmin/master-aset')->with('errors', 'Data tidak ditemukan');
+            return redirect()->to('/admin/master-aset')->with('errors', 'Data tidak ditemukan');
         }
 
 
@@ -151,7 +151,7 @@ class MasterAset extends BaseController
             'kategoris' => $this->kategoriModel->findAll(),
             'kelompokHarta' => $this->kelompokModel->findAll(),
         ];
-        return view('superadmin/master_aset/edit', $data);
+        return view('admin/master_aset/edit', $data);
     }
 
     public function update($id)
@@ -159,7 +159,7 @@ class MasterAset extends BaseController
         // Ambil data lama (termasuk soft delete)
         $row = $this->masterModel->withDeleted()->find((int)$id);
         if (!$row) {
-            return redirect()->to('/superadmin/master-aset')->with('errors', 'Data tidak ditemukan');
+            return redirect()->to('/admin/master-aset')->with('errors', 'Data tidak ditemukan');
         }
 
         // Validasi input
@@ -301,7 +301,7 @@ class MasterAset extends BaseController
             $db->transComplete();
 
             $note = $synced > 0 ? " (Sinkron ke aset: {$synced} baris)" : '';
-            return redirect()->to('/superadmin/master-aset')->with('success', 'Master aset diperbarui.' . $note);
+            return redirect()->to('/admin/master-aset')->with('success', 'Master aset diperbarui.' . $note);
         } catch (\Throwable $e) {
             $db->transRollback();
             return redirect()->back()->withInput()->with('error', 'Gagal memperbarui Master Aset: ' . $e->getMessage());
@@ -321,7 +321,7 @@ class MasterAset extends BaseController
             ->first();
 
         if (! $row) {
-            return redirect()->to('/superadmin/master-aset')
+            return redirect()->to('/admin/master-aset')
                 ->with('errors', 'Data master tidak ditemukan.');
         }
 
@@ -332,7 +332,7 @@ class MasterAset extends BaseController
         $db = \Config\Database::connect();
         $jumlahDipakai = (int) $db->table('aset')->where('id_master_aset', $id)->countAllResults();
 
-        return view('superadmin/master_aset/detail', [
+        return view('admin/master_aset/detail', [
             'title'           => 'Detail Master Aset',
             'row'             => $row,
             'atributDefaults' => $atributDefaults,
@@ -346,7 +346,7 @@ class MasterAset extends BaseController
     {
         try {
             $this->masterModel->delete((int)$id); // soft delete -> isi deleted_at
-            return redirect()->to('/superadmin/master-aset')->with('success', 'Master aset diarsipkan.');
+            return redirect()->to('/admin/master-aset')->with('success', 'Master aset diarsipkan.');
         } catch (\Throwable $e) {
             return redirect()->back()->with('error', 'Tidak dapat mengarsipkan master: ' . $e->getMessage());
         }
@@ -360,7 +360,7 @@ class MasterAset extends BaseController
             ->where('id_master_aset', (int)$id)->update();
 
         if ($ok) {
-            return redirect()->to('/superadmin/master-aset/trash')->with('success', 'Master aset dipulihkan.');
+            return redirect()->to('/admin/master-aset/trash')->with('success', 'Master aset dipulihkan.');
         }
         return redirect()->back()->with('error', 'Gagal memulihkan master.');
     }
@@ -381,7 +381,7 @@ class MasterAset extends BaseController
         $this->masterModel->delete((int)$id, true); // purge = true
         $db->transComplete();
 
-        return redirect()->to('/superadmin/master-aset/trash')->with('success', 'Master aset dihapus permanen.');
+        return redirect()->to('/admin/master-aset/trash')->with('success', 'Master aset dihapus permanen.');
     }
 
     /**

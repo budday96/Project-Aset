@@ -1,8 +1,6 @@
 <?= $this->extend('layout/superadmin_template/index') ?>
 <?= $this->section('content') ?>
 
-<h2 class="mb-4">Daftar Kelompok Harta</h2>
-
 <?php if (session()->getFlashdata('success')): ?>
     <div class="alert alert-success"> <?= session()->getFlashdata('success') ?> </div>
 <?php endif; ?>
@@ -10,38 +8,105 @@
     <div class="alert alert-danger"> <?= session()->getFlashdata('error') ?> </div>
 <?php endif; ?>
 
-<a href="<?= site_url('superadmin/kelompokharta/create') ?>" class="btn btn-primary mb-3">Tambah Kelompok Harta</a>
+<div class="card">
+    <div class="card-body">
+        <div class="card-header bg-light py-3 px-4 border-bottom">
+            <!-- TOP BAR: TITLE + ACTION BUTTONS -->
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3">
 
-<table class="table table-hover datatable-myasset">
-    <thead>
-        <tr>
-            <th>#</th>
-            <th>Kode</th>
-            <th>Nama Kelompok</th>
-            <th>Umur (tahun)</th>
-            <th>Tarif (%)</th>
-            <th>Status</th>
-            <th>Aksi</th>
-        </tr>
-    </thead>
-    <tbody>
-        <?php foreach ($items as $i => $row): ?>
-            <tr>
-                <td><?= $i + 1 ?></td>
-                <td><?= esc($row['kode_kelompok']) ?></td>
-                <td><?= esc($row['nama_kelompok']) ?></td>
-                <td><?= esc($row['umur_tahun']) ?></td>
-                <td><?= esc($row['tarif_persen_th']) ?>%</td>
-                <td>
-                    <?= $row['is_active'] ? '<span class="badge bg-success">Aktif</span>' : '<span class="badge bg-secondary">Nonaktif</span>' ?>
-                </td>
-                <td>
-                    <a href="<?= site_url('superadmin/kelompokharta/edit/' . $row['id_kelompok_harta']) ?>" class="btn btn-sm btn-warning">Edit</a>
-                    <a href="<?= site_url('superadmin/kelompokharta/delete/' . $row['id_kelompok_harta']) ?>" class="btn btn-sm btn-danger" onclick="return confirm('Nonaktifkan kelompok ini?')">Nonaktifkan</a>
-                </td>
-            </tr>
-        <?php endforeach; ?>
-    </tbody>
-</table>
+                <!-- TITLE -->
+                <h4 class="fw-bold mb-3 mb-md-0 text-center text-md-start w-100">
+                    List Kelompok Harta
+                </h4>
+
+                <!-- BUTTON GROUP -->
+                <div class="d-flex flex-wrap gap-2 w-100 w-md-auto justify-content-center justify-content-md-end">
+
+                    <!-- EXPORT PDF -->
+                    <button id="btn-export-pdf" class="btn btn-outline-danger btn-sm" data-bs-toggle="tooltip" title="Export PDF">
+                        <i class="bi bi-filetype-pdf fs-5"></i>
+                    </button>
+
+                    <!-- EXPORT EXCEL -->
+                    <button id="btn-export-excel" class="btn btn-outline-success btn-sm" data-bs-toggle="tooltip" title="Export Excel">
+                        <i class="bi bi-filetype-xls fs-5"></i>
+                    </button>
+
+                    <!-- REFRESH -->
+                    <a href="<?= base_url('/superadmin/kelompokharta'); ?>"
+                        class="btn btn-outline-secondary btn-sm"
+                        data-bs-toggle="tooltip" title="Refresh">
+                        <i class="bi bi-arrow-clockwise fs-5"></i>
+                    </a>
+
+                    <!-- TAMBAH ASET -->
+                    <a class="btn btn-warning btn-sm fw-semibold d-flex align-items-center justify-content-center px-2"
+                        href="<?= base_url('superadmin/kelompokharta/create') ?>">
+
+                        <i class="bi bi-plus-circle me-1 fs-5"></i>
+                        <span class="text-truncate" style="max-width: 90px;">Tambah Aset</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-body px-0">
+            <div class="table-responsive rounded mb-3">
+                <table class="table table-hover datatable-myasset">
+                    <thead>
+                        <tr>
+                            <th>
+                                <div class="checkbox d-inline-block">
+                                    <input type="checkbox" class="checkbox-input" id="checkbox1">
+                                    <label for="checkbox1" class="mb-0"></label>
+                                </div>
+                            </th>
+                            <th class="text-center">Kode</th>
+                            <th class="text-start">Nama Kelompok</th>
+                            <th class="text-center">Umur (tahun)</th>
+                            <th class="text-center">Tarif (%)</th>
+                            <th class="text-center">Status</th>
+                            <th class="text-center">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($items as $i => $row): ?>
+                            <tr>
+                                <td class="align-middle">
+                                    <div class="checkbox d-inline-block">
+                                        <?php $checkboxId = 'checkbox_' . $row['id_kelompok_harta']; ?>
+                                        <input type="checkbox"
+                                            class="checkbox-input"
+                                            id="<?= $checkboxId ?>"
+                                            name="selected[]"
+                                            value="<?= $row['id_kelompok_harta'] ?>">
+                                        <label for="<?= $checkboxId ?>" class="mb-0"></label>
+                                    </div>
+                                </td>
+                                <td class="text-center"><?= esc($row['kode_kelompok']) ?></td>
+                                <td class="text-start"><?= esc($row['nama_kelompok']) ?></td>
+                                <td class="text-center"><?= esc($row['umur_tahun']) ?></td>
+                                <td class="text-center"><?= esc($row['tarif_persen_th']) ?>%</td>
+                                <td class="text-center">
+                                    <?= $row['is_active'] ? '<span class="badge bg-success">Aktif</span>' : '<span class="badge bg-secondary">Nonaktif</span>' ?>
+                                </td>
+                                <td class="text-center">
+                                    <!-- Tombol Edit -->
+                                    <a href="<?= site_url('superadmin/kelompokharta/edit/' . $row['id_kelompok_harta']) ?>"
+                                        class="btn btn-sm"
+                                        data-bs-toggle="tooltip"
+                                        data-bs-placement="top"
+                                        title="Edit">
+                                        <i class="bi bi-pen" style="color: #fd7e14;"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
 
 <?= $this->endSection() ?>

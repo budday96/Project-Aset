@@ -16,8 +16,8 @@
                 <div class="c2g-user-name mb-1"><?= user()->full_name; ?></div>
                 <div class="c2g-user-sub">
                     <span class="c2g-user-role badge bg-warning text-white px-2 py-1 rounded-pill">
-                        <i class="bi bi-shield-check me-1"></i>
-                        <?= get_user_role_name() ?>
+                        <i class="bi bi-geo-alt-fill"></i>
+                        <?= esc(get_nama_cabang(user()->id_cabang) ?? 'Tidak diketahui') ?>
                     </span>
                 </div>
             </div>

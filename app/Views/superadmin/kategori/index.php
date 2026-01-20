@@ -2,9 +2,6 @@
 
 <?= $this->section('content'); ?>
 
-<?php if (session()->getFlashdata('success')): ?>
-    <div class="alert alert-success"><?= session()->getFlashdata('success') ?></div>
-<?php endif; ?>
 <div class="card">
     <div class="card-body">
         <div class="card-header bg-white py-3 px-4">

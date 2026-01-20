@@ -1,4 +1,4 @@
-<?= $this->extend('layout/superadmin_template/index') ?>
+<?= $this->extend('layout/admin_template/index') ?>
 <?= $this->section('content') ?>
 
 <div class="card">
@@ -26,7 +26,7 @@
                     </button>
 
                     <!-- REFRESH -->
-                    <a href="<?= base_url('/superadmin/subkategori'); ?>"
+                    <a href="<?= base_url('/admin/subkategori'); ?>"
                         class="btn btn-outline-secondary btn-sm"
                         data-bs-toggle="tooltip" title="Refresh">
                         <i class="bi bi-arrow-clockwise fs-5"></i>
@@ -34,7 +34,7 @@
 
                     <!-- TAMBAH Subkategori -->
                     <a class="btn btn-warning btn-sm fw-semibold d-flex align-items-center justify-content-center px-2"
-                        href="<?= base_url('superadmin/subkategori/create') ?>">
+                        href="<?= base_url('admin/subkategori/create') ?>">
 
                         <i class="bi bi-plus-circle me-1 fs-5"></i>
                         <span class="text-truncate">Tambah Subkategori</span>
@@ -75,12 +75,12 @@
                                 </td>
                                 <td><?= esc($s['nama_kategori']) ?></td>
                                 <td><?= esc($s['nama_subkategori']) ?></td>
-                                <td><a class="btn btn-outline-secondary btn-sm" href="<?= base_url('superadmin/atribut/' . $s['id_subkategori']) ?>">Kelola</a></td>
+                                <td><a class="btn btn-outline-secondary btn-sm" href="<?= base_url('admin/atribut/' . $s['id_subkategori']) ?>">Kelola</a></td>
                                 <td class="text-center align-middle">
                                     <div class="d-flex justify-content-center align-items-center list-action">
 
                                         <!-- Tombol Edit -->
-                                        <a href="<?= base_url('superadmin/subkategori/' . $s['id_subkategori'] . '/edit') ?>"
+                                        <a href="<?= base_url('admin/subkategori/' . $s['id_subkategori'] . '/edit') ?>"
                                             class="btn btn-sm"
                                             data-bs-toggle="tooltip"
                                             data-bs-placement="top"
@@ -89,7 +89,7 @@
                                         </a>
 
                                         <!-- Tombol Delete -->
-                                        <form action="<?= base_url('superadmin/subkategori/' . $s['id_subkategori'] . '/delete') ?>"
+                                        <form action="<?= base_url('admin/subkategori/' . $s['id_subkategori'] . '/delete') ?>"
                                             method="post"
                                             class="d-inline"
                                             onsubmit="return confirm('Hapus subkategori ini?')">

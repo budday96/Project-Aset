@@ -36,18 +36,6 @@
                         <?= session('errors.kode_kategori') ?: 'Kode kategori wajib diisi.' ?>
                     </div>
                 </div>
-
-                <!-- Deskripsi (opsional) -->
-                <div class="col-12">
-                    <label class="form-label">Deskripsi</label>
-                    <textarea name="deskripsi"
-                        class="form-control <?= session('errors.deskripsi') ? 'is-invalid' : '' ?>"
-                        rows="4"
-                        placeholder="Deskripsi kategori (opsional)"><?= old('deskripsi', $kategori['deskripsi']) ?></textarea>
-                    <?php if (session('errors.deskripsi')): ?>
-                        <div class="invalid-feedback"><?= session('errors.deskripsi') ?></div>
-                    <?php endif; ?>
-                </div>
             </div>
 
             <div class="mt-3">

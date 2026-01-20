@@ -45,14 +45,14 @@ class Profile extends BaseController
             'full_name' => 'required|string|min_length[3]|max_length[100]',
             'user_image' => [
                 'label' => 'Gambar Profil',
-                'rules' => 'uploaded[user_image]|is_image[user_image]|mime_in[user_image,image/jpg,image/jpeg,image/png]',
+                'rules' => 'is_image[user_image]|mime_in[user_image,image/jpg,image/jpeg,image/png]',
                 'errors' => [
-                    'uploaded' => 'Silakan pilih gambar terlebih dahulu',
                     'is_image' => 'File harus berupa gambar',
                     'mime_in' => 'Hanya diperbolehkan JPG, JPEG, PNG'
                 ]
             ]
         ];
+
 
         if (!$this->request->getFile('user_image')->isValid()) {
             unset($validationRules['user_image']);
@@ -71,7 +71,7 @@ class Profile extends BaseController
 
             // Hapus file lama jika bukan default
             $oldPath = FCPATH . 'img/' . $user->user_image;
-            if ($user->user_image && $user->user_image !== 'default.svg' && file_exists($oldPath) && is_file($oldPath)) {
+            if ($user->user_image && $user->user_image !== 'default.jpg' && file_exists($oldPath) && is_file($oldPath)) {
                 unlink($oldPath);
             }
 
