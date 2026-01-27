@@ -149,8 +149,8 @@
                                         <!-- Dikirim: Terima -->
                                         <form method="post" action="<?= site_url('superadmin/mutasi/terima-header/' . $row['id_mutasi']); ?>" class="d-inline">
                                             <?= csrf_field(); ?>
-                                            <button class="btn btn-sm btn-success">
-                                                <i class="bi bi-check-circle"></i> Terima
+                                            <button class="btn btn-sm btn-warning">
+                                                <i class="bi bi-box-arrow-down"></i> Terima
                                             </button>
                                         </form>
 
@@ -161,11 +161,9 @@
                                         </span>
 
                                     <?php else: ?>
-                                        <!-- Jika tidak ada aksi lain -->
-                                        <span class="text-secondary">
-                                            <i class="bi bi-check-circle text-success"></i>
+                                        <span class="badge bg-success">
+                                            <i class="bi bi-check2-circle"></i> Berhasil
                                         </span>
-
                                     <?php endif; ?>
                                 </td>
 

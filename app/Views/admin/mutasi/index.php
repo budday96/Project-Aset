@@ -56,10 +56,6 @@
                                 <?= esc($cabangUser->nama_cabang) ?>
                             </option>
                         </select>
-
-                        <!-- hidden input agar nilainya tetap terkirim -->
-                        <input type="hidden" id="filter-asal-hidden"
-                            value="<?= esc($cabangUser->nama_cabang) ?>">
                     </div>
 
 
@@ -76,7 +72,6 @@
                             <?php endforeach; ?>
                         </select>
                     </div>
-
 
                     <!-- Filter Status -->
                     <div class="col-md-2 col-6">
@@ -126,70 +121,125 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <?php $no = 1;
-                        foreach ($items as $row): ?>
+                        <?php if (!empty($items)): ?>
+                            <?php $no = 1;
+                            foreach ($items as $row): ?>
+                                <tr>
+                                    <td><?= $no++; ?></td>
+
+                                    <td>
+                                        <strong><?= esc($row['kode_mutasi']); ?></strong>
+                                    </td>
+
+                                    <td><?= date('d M Y H:i', strtotime($row['tanggal_mutasi'])); ?></td>
+
+                                    <td><?= esc($row['cabang_asal']); ?></td>
+
+                                    <td><?= esc($row['cabang_tujuan']); ?></td>
+
+                                    <!-- STATUS + AKSI UTAMA -->
+                                    <?php
+                                    $isCabangAsal   = (int) user()->id_cabang === (int) $row['id_cabang_asal'];
+                                    $isCabangTujuan = (int) user()->id_cabang === (int) $row['id_cabang_tujuan'];
+                                    ?>
+                                    <td>
+                                        <?php if ($row['status'] === 'pending' && $isCabangAsal && in_groups('admin')): ?>
+
+                                            <!-- EDIT -->
+                                            <a href="<?= site_url('admin/mutasi/edit/' . $row['id_mutasi']); ?>"
+                                                class="btn btn-sm btn-outline-primary mb-1 d-inline-flex align-items-center"
+                                                data-bs-toggle="tooltip"
+                                                title="Edit Mutasi">
+                                                <i class="bi bi-pencil-square me-1"></i>
+                                                <span>Edit</span>
+                                            </a>
+
+                                            <!-- KIRIM -->
+                                            <button
+                                                class="btn btn-sm btn-warning mb-1 d-inline-flex align-items-center"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#modalKirimMutasi"
+                                                data-id="<?= $row['id_mutasi']; ?>"
+                                                data-kode="<?= esc($row['kode_mutasi']); ?>">
+                                                <i class="bi bi-send-fill me-1"></i>
+                                                <span>Kirim</span>
+                                            </button>
+
+                                            <!-- BATAL -->
+                                            <form method="post"
+                                                action="<?= site_url('admin/mutasi/batal-header/' . $row['id_mutasi']); ?>"
+                                                class="d-inline"
+                                                onsubmit="return confirm('Apakah Anda yakin ingin membatalkan mutasi ini?')">
+                                                <?= csrf_field(); ?>
+                                                <button class="btn btn-sm btn-danger mb-1 d-inline-flex align-items-center">
+                                                    <i class="bi bi-x-circle-fill me-1"></i>
+                                                    <span>Batal</span>
+                                                </button>
+                                            </form>
+
+
+                                        <?php elseif ($row['status'] === 'pending' && !$isCabangAsal): ?>
+
+                                            <!-- CABANG TUJUAN: HANYA STATUS -->
+                                            <span class="badge bg-secondary">Pending</span>
+
+                                        <?php elseif ($row['status'] === 'dikirim'): ?>
+
+                                            <?php if ($isCabangAsal): ?>
+                                                <!-- CABANG ASAL -->
+                                                <span class="badge bg-warning mb-1">
+                                                    <i class="bi bi-truck"></i> Dikirim
+                                                </span>
+
+                                                <a href="<?= site_url('admin/mutasi/surat-jalan/' . $row['id_mutasi']); ?>"
+                                                    target="_blank"
+                                                    class="btn btn-sm btn-outline-primary mb-1">
+                                                    <i class="bi bi-printer"></i> Surat Jalan
+                                                </a>
+
+                                            <?php elseif ($isCabangTujuan): ?>
+                                                <!-- CABANG TUJUAN -->
+                                                <form method="post"
+                                                    action="<?= site_url('admin/mutasi/terima-header/' . $row['id_mutasi']); ?>"
+                                                    class="d-inline">
+                                                    <?= csrf_field(); ?>
+                                                    <button class="btn btn-sm btn-warning">
+                                                        <i class="bi bi-box-arrow-down"></i> Terima
+                                                    </button>
+                                                </form>
+                                            <?php endif; ?>
+
+                                        <?php elseif ($row['status'] === 'diterima'): ?>
+
+                                            <span class="badge bg-success">
+                                                <i class="bi bi-check2-circle"></i> Berhasil
+                                            </span>
+
+                                        <?php elseif ($row['status'] === 'dibatalkan'): ?>
+
+                                            <span class="badge bg-danger">
+                                                <i class="bi bi-x-circle"></i> Dibatalkan
+                                            </span>
+
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="text-center">
+                                        <!-- Tombol View -->
+                                        <a href="<?= site_url('admin/mutasi/' . $row['id_mutasi']); ?>"
+                                            class="btn btn-sm"
+                                            data-bs-toggle="tooltip"
+                                            data-bs-placement="top"
+                                            title="Detail Mutasi">
+                                            <i class="bi bi-eye" style="color: #fd7e14;"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php else: ?>
                             <tr>
-                                <td><?= $no++; ?></td>
-                                <td><?= esc($row['kode_mutasi']); ?></td>
-                                <td><?= date('d M Y H:i', strtotime($row['tanggal_mutasi'])); ?></td>
-                                <td><?= esc($row['cabang_asal']); ?></td>
-                                <td><?= esc($row['cabang_tujuan']); ?></td>
-                                <td>
-                                    <?php if ($row['status'] === 'pending' && in_groups('admin')): ?>
-                                        <!-- Pending: Kirim / Batal -->
-                                        <form method="post" action="<?= site_url('admin/mutasi/kirim-header/' . $row['id_mutasi']); ?>" class="d-inline">
-                                            <?= csrf_field(); ?>
-                                            <button class="btn btn-sm btn-warning">
-                                                <i class="bi bi-send"></i> Kirim
-                                            </button>
-                                        </form>
-
-                                        <form method="post" action="<?= site_url('admin/mutasi/batal-header/' . $row['id_mutasi']); ?>" class="d-inline">
-                                            <?= csrf_field(); ?>
-                                            <button class="btn btn-sm btn-danger">
-                                                <i class="bi bi-x-circle"></i> Batal
-                                            </button>
-                                        </form>
-
-                                    <?php elseif ($row['status'] === 'dikirim' && (user()->id_cabang == $row['id_cabang_tujuan'] || in_groups('admin'))): ?>
-                                        <!-- Dikirim: Terima -->
-                                        <form method="post" action="<?= site_url('admin/mutasi/terima-header/' . $row['id_mutasi']); ?>" class="d-inline">
-                                            <?= csrf_field(); ?>
-                                            <button class="btn btn-sm btn-success">
-                                                <i class="bi bi-check-circle"></i> Terima
-                                            </button>
-                                        </form>
-
-                                    <?php elseif ($row['status'] === 'selesai'): ?>
-                                        <!-- Selesai: hanya icon -->
-                                        <span class="text-success fw-bold">
-                                            <i class="bi bi-check2-circle fs-5"></i> Selesai
-                                        </span>
-
-                                    <?php else: ?>
-                                        <!-- Jika tidak ada aksi lain -->
-                                        <span class="text-secondary">
-                                            <i class="bi bi-check-circle text-success"></i>
-                                        </span>
-
-                                    <?php endif; ?>
+                                <td colspan="7" class="text-center text-muted py-3">
+                                    Belum ada data mutasi.
                                 </td>
-
-                                <td class="text-center">
-                                    <!-- Tombol View -->
-                                    <a href="<?= site_url('admin/mutasi/' . $row['id_mutasi']); ?>"
-                                        class="btn btn-sm"
-                                        data-bs-toggle="tooltip"
-                                        data-bs-placement="top"
-                                        title="Detail Mutasi">
-                                        <i class="bi bi-eye" style="color: #fd7e14;"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                        <?php if (empty($items)): ?>
-                            <tr>
-                                <td colspan="8" class="text-center text-muted">Belum ada data mutasi.</td>
                             </tr>
                         <?php endif; ?>
                     </tbody>
@@ -197,6 +247,62 @@
             </div>
         </div>
     </div>
+
+    <div class="modal fade" id="modalKirimMutasi" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <form method="post" id="formKirimMutasi">
+                <?= csrf_field(); ?>
+                <div class="modal-content">
+
+                    <div class="modal-header">
+                        <h5 class="modal-title fw-bold">Konfirmasi Pengiriman Aset</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+
+                    <div class="modal-body">
+                        <p class="text-muted mb-3">
+                            Anda akan mengirim mutasi <strong id="kodeMutasiText"></strong>.
+                            Lengkapi data pengiriman berikut:
+                        </p>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Metode Pengiriman</label>
+                                <select name="metode_pengiriman" class="form-select" required>
+                                    <option value="">-- Pilih Metode --</option>
+                                    <option value="Driver Kantor">Driver Kantor</option>
+                                    <option value="GO BOX">GO BOX</option>
+                                    <option value="Ekspedisi Pihak Ketiga">Ekspedisi Pihak Ketiga</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Nama Pengantar</label>
+                                <input type="text" name="nama_pengantar" class="form-control" required>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Nomor Kendaraan</label>
+                                <input type="text" name="nomor_kendaraan" class="form-control"
+                                    placeholder="B 1234 XYZ">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            Batal
+                        </button>
+                        <button type="submit" class="btn btn-warning">
+                            <i class="bi bi-send-check"></i> Kirim Mutasi
+                        </button>
+                    </div>
+
+                </div>
+            </form>
+        </div>
+    </div>
+
 
     <?= $this->endSection(); ?>
 
@@ -524,4 +630,22 @@
 
         }); // DOMContentLoaded
     </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const modal = document.getElementById('modalKirimMutasi');
+            const form = document.getElementById('formKirimMutasi');
+            const kodeText = document.getElementById('kodeMutasiText');
+
+            modal.addEventListener('show.bs.modal', function(event) {
+                const btn = event.relatedTarget;
+                const id = btn.getAttribute('data-id');
+                const kode = btn.getAttribute('data-kode');
+
+                form.action = "<?= site_url('admin/mutasi/kirim-header'); ?>/" + id;
+                kodeText.textContent = kode;
+            });
+        });
+    </script>
+
     <?= $this->endSection(); ?>

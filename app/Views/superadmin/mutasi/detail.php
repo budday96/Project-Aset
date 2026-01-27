@@ -23,7 +23,7 @@
             <div class="row mb-4">
                 <div class="col-lg-6 col-12 mb-3">
                     <div class="info-card p-3">
-                        <h6 class="fw-semibold text-primary mb-3">
+                        <h6 class="fw-semibold mb-3">
                             <i class="bi bi-card-text me-1"></i>Informasi Mutasi
                         </h6>
                         <div class="row g-2">
@@ -53,7 +53,7 @@
                 </div>
                 <div class="col-lg-6 col-12">
                     <div class="info-card p-3">
-                        <h6 class="fw-semibold text-primary mb-3">
+                        <h6 class="fw-semibold mb-3">
                             <i class="bi bi-check-circle me-1"></i>Status & Detail
                         </h6>
                         <div class="row g-2">
@@ -92,7 +92,7 @@
             </h6>
             <div class="table-responsive">
                 <table class="table table-hover table-striped border">
-                    <thead class="table-dark">
+                    <thead>
                         <tr>
                             <th class="text-center" style="width: 5%;">No</th>
                             <th style="width: 20%;">Kode Aset</th>
@@ -108,10 +108,10 @@
                         foreach ($details as $d): ?>
                             <tr>
                                 <td class="text-center fw-semibold"><?= $no++; ?></td>
-                                <td class="fw-semibold text-primary"><?= esc($d['kode_aset']); ?></td>
+                                <td class="fw-semibold"><?= esc($d['kode_aset']); ?></td>
                                 <td><?= esc($d['nama_master']); ?></td>
                                 <td class="text-center">
-                                    <span class="badge bg-info fs-6">
+                                    <span class="badge bg-warning fs-6">
                                         <i class="bi bi-box-seam me-1"></i><?= (int)$d['qty']; ?>
                                     </span>
                                 </td>
@@ -142,7 +142,7 @@
 <style>
     /* Custom styles for better UX */
     .card-header-custom {
-        background: linear-gradient(135deg, #007bff, #0056b3);
+        background: #fd7e14;
         color: white;
         border-radius: 0.375rem 0.375rem 0 0;
     }

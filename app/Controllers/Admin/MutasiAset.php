@@ -7,6 +7,7 @@ use App\Models\MutasiAsetModel;
 use App\Models\MutasiAsetDetailModel;
 use App\Models\AsetModel;
 use App\Models\CabangModel;
+use App\Models\NotifikasiModel;
 use CodeIgniter\Exceptions\PageNotFoundException;
 
 class MutasiAset extends BaseController
@@ -15,6 +16,7 @@ class MutasiAset extends BaseController
     protected $detailModel;
     protected $asetModel;
     protected $cabangModel;
+    protected $notifModel;
 
     public function __construct()
     {
@@ -22,6 +24,7 @@ class MutasiAset extends BaseController
         $this->detailModel  = new MutasiAsetDetailModel();
         $this->asetModel    = new AsetModel();
         $this->cabangModel  = new CabangModel();
+        $this->notifModel   = new NotifikasiModel();
     }
 
     /** Generate kode mutasi: MT-YYYYMMDD-0001 */
@@ -98,6 +101,7 @@ class MutasiAset extends BaseController
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
+        $catatan        = $this->request->getPost('catatan');
         $idCabangTujuan = (int) $this->request->getPost('id_cabang_tujuan');
 
         if ($idCabangAsal === $idCabangTujuan) {
@@ -152,6 +156,7 @@ class MutasiAset extends BaseController
                 'id_cabang_asal'    => $idCabangAsal,
                 'id_cabang_tujuan'  => $idCabangTujuan,
                 'status'            => 'pending',
+                'catatan'        => $catatan,
                 'created_by'        => user()->id,
                 'updated_by'        => user()->id,
             ], true);
@@ -178,28 +183,243 @@ class MutasiAset extends BaseController
         return redirect()->to('/admin/mutasi')->with('success', 'Mutasi berhasil dibuat (pending).');
     }
 
+    public function edit($id)
+    {
+        $id = (int)$id;
+
+        $header = $this->mutasiModel->find($id);
+        if (!$header) {
+            return redirect()->to('/admin/mutasi')->with('error', 'Data mutasi tidak ditemukan.');
+        }
+
+        // Hanya cabang asal & status pending yang boleh edit
+        if (
+            $header['status'] !== 'pending' ||
+            (int)$header['id_cabang_asal'] !== (int)user()->id_cabang
+        ) {
+            return redirect()->to('/admin/mutasi')
+                ->with('error', 'Mutasi tidak dapat diedit.');
+        }
+
+        // Detail mutasi
+        $details = $this->detailModel
+            ->where('id_mutasi', $id)
+            ->findAll();
+
+        // Aset cabang asal
+        $asets = $this->asetModel
+            ->where('aset.deleted_at IS NULL', null, false)
+            ->where('aset.id_cabang', user()->id_cabang)
+            ->select('aset.*, master_aset.nama_master, kategori_aset.nama_kategori')
+            ->join('master_aset', 'master_aset.id_master_aset = aset.id_master_aset', 'left')
+            ->join('kategori_aset', 'kategori_aset.id_kategori = aset.id_kategori', 'left')
+            ->orderBy('aset.kode_aset', 'ASC')
+            ->findAll();
+
+        return view('admin/mutasi/create', [
+            'title'   => 'Edit Mutasi Aset',
+            'cabangs' => $this->cabangModel
+                ->where('id_cabang !=', user()->id_cabang)
+                ->orderBy('nama_cabang', 'ASC')
+                ->findAll(),
+            'asets'   => $asets,
+            'header'  => $header,
+            'details' => $details,
+            'mode'    => 'edit'
+        ]);
+    }
+
+    public function update($id)
+    {
+        $id = (int)$id;
+
+        $header = $this->mutasiModel->find($id);
+        if (!$header) {
+            return redirect()->to('/admin/mutasi')->with('error', 'Data mutasi tidak ditemukan.');
+        }
+
+        // Validasi hak edit
+        if (
+            $header['status'] !== 'pending' ||
+            (int)$header['id_cabang_asal'] !== (int)user()->id_cabang
+        ) {
+            return redirect()->to('/admin/mutasi')
+                ->with('error', 'Mutasi tidak dapat diubah.');
+        }
+
+        $rules = [
+            'id_cabang_tujuan' => 'required|integer',
+        ];
+
+        if (!$this->validate($rules)) {
+            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+        }
+
+        $idCabangAsal   = (int) user()->id_cabang;
+        $idCabangTujuan = (int) $this->request->getPost('id_cabang_tujuan');
+        $catatan        = $this->request->getPost('catatan');
+
+        if ($idCabangAsal === $idCabangTujuan) {
+            return redirect()->back()->withInput()
+                ->with('error', 'Cabang asal dan tujuan tidak boleh sama.');
+        }
+
+        $itemsRaw = $this->request->getPost('items');
+        if (!is_array($itemsRaw) || empty($itemsRaw)) {
+            return redirect()->back()->withInput()
+                ->with('error', 'Tidak ada aset yang dipilih.');
+        }
+
+        $items = [];
+        foreach ($itemsRaw as $idAset => $row) {
+            if (!empty($row['checked']) && (int)$row['qty'] > 0) {
+
+                $aset = $this->asetModel
+                    ->where('id_aset', (int)$idAset)
+                    ->where('id_cabang', $idCabangAsal)
+                    ->where('deleted_at IS NULL', null, false)
+                    ->first();
+
+                if (!$aset) {
+                    return redirect()->back()->withInput()
+                        ->with('error', 'Aset tidak valid.');
+                }
+
+                if ((int)$row['qty'] > (int)$aset['stock']) {
+                    return redirect()->back()->withInput()
+                        ->with('error', 'Qty melebihi stok aset.');
+                }
+
+                $items[] = [
+                    'id_aset' => (int)$idAset,
+                    'qty'     => (int)$row['qty'],
+                    'ket'     => $row['keterangan'] ?? null,
+                ];
+            }
+        }
+
+        if (empty($items)) {
+            return redirect()->back()->withInput()
+                ->with('error', 'Minimal satu aset harus dipilih.');
+        }
+
+        $db = \Config\Database::connect();
+        $db->transStart();
+
+        try {
+
+            // Update header
+            $this->mutasiModel->update($id, [
+                'id_cabang_tujuan' => $idCabangTujuan,
+                'catatan'          => $catatan,
+                'updated_by'       => user()->id,
+            ]);
+
+            // Hapus detail lama
+            $this->detailModel->where('id_mutasi', $id)->delete();
+
+            // Insert detail baru
+            foreach ($items as $item) {
+                $this->detailModel->insert([
+                    'id_mutasi'    => $id,
+                    'id_aset_asal' => $item['id_aset'],
+                    'qty'          => $item['qty'],
+                    'keterangan'   => $item['ket'],
+                ]);
+            }
+
+            $db->transComplete();
+        } catch (\Throwable $e) {
+            $db->transRollback();
+            return redirect()->back()->withInput()
+                ->with('error', $e->getMessage());
+        }
+
+        return redirect()->to('/admin/mutasi')
+            ->with('success', 'Mutasi berhasil diperbarui (pending).');
+    }
+
+
+
     /** -----------------------------------------------------------
      *  KIRIM = ubah status pending → dikirim
      * ----------------------------------------------------------- */
     public function kirimHeader($id)
     {
         $mutasi = $this->mutasiModel->find($id);
+
+        if (!$mutasi) {
+            return redirect()->back()->with('error', 'Mutasi tidak ditemukan.');
+        }
+
         if ((int)$mutasi['id_cabang_asal'] !== (int)user()->id_cabang) {
             return redirect()->back()->with('error', 'Anda bukan cabang asal.');
         }
 
-        if (!$mutasi) return redirect()->back()->with('error', 'Mutasi tidak ditemukan.');
-
-        if ($mutasi['status'] !== 'pending')
+        if ($mutasi['status'] !== 'pending') {
             return redirect()->back()->with('error', 'Mutasi bukan pending.');
+        }
 
-        $this->mutasiModel->update($id, [
-            'status'     => 'dikirim',
-            'updated_by' => user()->id,
-        ]);
+        // ===============================
+        // DATA PENGIRIMAN (dari dialog / form)
+        // ===============================
+        $metode    = $this->request->getPost('metode_pengiriman');
+        $pengantar = $this->request->getPost('nama_pengantar');
+        $kendaraan = $this->request->getPost('nomor_kendaraan');
 
-        return redirect()->back()->with('success', 'Mutasi dikirim ke cabang tujuan.');
+        if (!$metode || !$pengantar) {
+            return redirect()->back()->with('error', 'Data pengiriman belum lengkap.');
+        }
+
+        $db = \Config\Database::connect();
+        $db->transStart();
+
+        try {
+
+            // Generate nomor surat jalan jika belum ada
+            $nomorSJ = $mutasi['nomor_surat_jalan']
+                ?: $this->generateNomorSuratJalan($mutasi['id_cabang_asal']);
+
+            // Update header mutasi
+            $this->mutasiModel->update($id, [
+                'status'            => 'dikirim',
+                'nomor_surat_jalan' => $nomorSJ,
+                'metode_pengiriman' => $metode,
+                'nama_pengantar'    => $pengantar,
+                'nomor_kendaraan'   => $kendaraan,
+                'updated_by'        => user()->id,
+            ]);
+
+            // ===========================
+            // KIRIM NOTIFIKASI KE CABANG TUJUAN
+            // ===========================
+
+            $usersTujuan = $db->table('users')
+                ->where('id_cabang', $mutasi['id_cabang_tujuan'])
+                ->get()
+                ->getResultArray();
+
+            foreach ($usersTujuan as $u) {
+                $this->notifModel->insert([
+                    'id_user' => $u['id'],
+                    'tipe'    => 'mutasi',
+                    'judul'   => 'Mutasi Aset Masuk',
+                    'pesan'   => 'Mutasi ' . $mutasi['kode_mutasi'] . ' dari cabang ' . get_nama_cabang(user()->id_cabang) . ' telah dikirim.',
+                    'url'     => site_url('admin/mutasi/' . $id),
+                ]);
+            }
+
+            $db->transComplete();
+        } catch (\Throwable $e) {
+            $db->transRollback();
+            return redirect()->back()->with('error', $e->getMessage());
+        }
+
+        return redirect()->back()->with('success', 'Mutasi dikirim & notifikasi berhasil dikirim.');
     }
+
+
+
 
     /** -----------------------------------------------------------
      *  BATAL
@@ -382,6 +602,18 @@ class MutasiAset extends BaseController
             return redirect()->to('/admin/mutasi')->with('error', 'Akses ditolak.');
         }
 
+        // ===============================
+        // MARK NOTIFIKASI SEBAGAI SUDAH DIBACA
+        // ===============================
+        $notifModel = new NotifikasiModel();
+
+        $notifModel
+            ->where('id_user', user()->id)
+            ->where('url', site_url('admin/mutasi/' . $id))
+            ->set(['is_read' => 1])
+            ->update();
+
+        // ===============================
 
         $details = $this->detailModel
             ->select('mutasi_aset_detail.*, aset.kode_aset, master_aset.nama_master AS nama_master')
@@ -392,6 +624,70 @@ class MutasiAset extends BaseController
 
         return view('admin/mutasi/detail', [
             'title'   => 'Detail Mutasi Aset',
+            'header'  => $header,
+            'details' => $details,
+        ]);
+    }
+
+    protected function generateNomorSuratJalan(int $idCabang): string
+    {
+        $db = \Config\Database::connect();
+
+        $bulan = date('Ym');
+
+        // ambil kode cabang
+        $cabang = $this->cabangModel
+            ->select('kode_cabang')
+            ->where('id_cabang', $idCabang)
+            ->get()
+            ->getRow();
+
+        $kodeCabang = $cabang->kode_cabang ?? 'CBG';
+
+        // hitung SJ bulan ini per cabang
+        $count = $db->table('mutasi_aset')
+            ->where('id_cabang_asal', $idCabang)
+            ->where('DATE_FORMAT(tanggal_mutasi,"%Y%m")', $bulan, false)
+            ->where('nomor_surat_jalan IS NOT NULL', null, false)
+            ->countAllResults();
+
+        $urut = str_pad($count + 1, 4, '0', STR_PAD_LEFT);
+
+        return "SJ-{$kodeCabang}-{$bulan}-{$urut}";
+    }
+
+
+    public function suratJalan($id)
+    {
+        $id = (int)$id;
+
+        $header = $this->mutasiModel
+            ->select('mutasi_aset.*, c1.nama_cabang AS cabang_asal, c2.nama_cabang AS cabang_tujuan')
+            ->join('cabang c1', 'c1.id_cabang = mutasi_aset.id_cabang_asal')
+            ->join('cabang c2', 'c2.id_cabang = mutasi_aset.id_cabang_tujuan')
+            ->where('id_mutasi', $id)
+            ->first();
+
+        if (!$header) {
+            throw new PageNotFoundException('Data mutasi tidak ditemukan');
+        }
+
+        // akses hanya asal / tujuan
+        if (
+            (int)$header['id_cabang_asal'] !== (int)user()->id_cabang &&
+            (int)$header['id_cabang_tujuan'] !== (int)user()->id_cabang
+        ) {
+            throw new PageNotFoundException('Akses ditolak');
+        }
+
+        $details = $this->detailModel
+            ->select('mutasi_aset_detail.*, aset.kode_aset, master_aset.nama_master')
+            ->join('aset', 'aset.id_aset = mutasi_aset_detail.id_aset_asal')
+            ->join('master_aset', 'master_aset.id_master_aset = aset.id_master_aset')
+            ->where('id_mutasi', $id)
+            ->findAll();
+
+        return view('admin/mutasi/surat_jalan', [
             'header'  => $header,
             'details' => $details,
         ]);

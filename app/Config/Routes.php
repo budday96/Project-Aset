@@ -263,10 +263,21 @@ $routes->group('admin', ['filter' => 'role:admin'], function ($routes) {
     $routes->get('mutasi',              'Admin\MutasiAset::index');
     $routes->get('mutasi/create',       'Admin\MutasiAset::create');
     $routes->post('mutasi/store',       'Admin\MutasiAset::store');
+    $routes->get('mutasi/edit/(:num)', 'Admin\MutasiAset::edit/$1');
+    $routes->post('mutasi/update/(:num)', 'Admin\MutasiAset::update/$1');
     $routes->get('mutasi/(:num)',       'Admin\MutasiAset::show/$1');
     $routes->post('mutasi/kirim-header/(:num)', 'Admin\MutasiAset::kirimHeader/$1');
     $routes->post('mutasi/batal-header/(:num)', 'Admin\MutasiAset::batalHeader/$1');
     $routes->post('mutasi/terima-header/(:num)', 'Admin\MutasiAset::terimaHeader/$1');
+
+    // Surat Jalan Mutasi Aset
+    $routes->get('mutasi/surat-jalan/(:num)', 'Admin\MutasiAset::suratJalan/$1');
+
+    // Notifikasi
+    $routes->get('notifikasi', 'Admin\Notifikasi::index');
+    $routes->get('notifikasi/read-all', 'Admin\Notifikasi::markAllRead');
+
+
 
     // Profile
     $routes->get('profile', 'Admin\Profile::index');

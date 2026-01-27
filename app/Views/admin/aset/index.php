@@ -69,7 +69,6 @@
                     <div class="col-md-2 col-6">
                         <label class="form-label fw-semibold mb-1">Cabang</label>
                         <select id="filter-cabang" class="form-select form-select-sm">
-                            <option value="">Semua</option>
                             <?php foreach ($cabangs as $c): ?>
                                 <option value="<?= esc($c['nama_cabang']) ?>"><?= esc($c['nama_cabang']) ?></option>
                             <?php endforeach; ?>
@@ -660,7 +659,6 @@
         // ==== RESET FILTER
         $('#reset-filter').on('click', function() {
             $('#filter-kategori').val('');
-            $('#filter-cabang').val('');
             $('#filter-kondisi').val('');
             $('#filter-tanggal-awal').val('');
             $('#filter-tanggal-akhir').val('');

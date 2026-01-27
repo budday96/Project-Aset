@@ -21,6 +21,12 @@ class MutasiAsetModel extends Model
         'id_cabang_tujuan',
         'status',
         'catatan',
+        'metode_pengiriman',
+        'nama_pengantar',
+        'nomor_kendaraan',
+        'nomor_surat_jalan',
+        'created_at',
+        'updated_at',
         'created_by',
         'updated_by',
     ];

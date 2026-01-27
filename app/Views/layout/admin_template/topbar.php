@@ -11,6 +11,27 @@
                 <i class="bi bi-arrows-fullscreen"></i>
             </button>
 
+            <!-- =======================
+     NOTIFICATION BELL (BOOTSTRAP 5 STYLE)
+======================== -->
+            <a href="<?= site_url('admin/notifikasi'); ?>"
+                class="btn btn-light position-relative rounded-circle d-flex align-items-center justify-content-center"
+                style="width:38px;height:38px"
+                data-bs-toggle="tooltip"
+                title="Notifikasi">
+
+                <i class="bi bi-bell fs-5"></i>
+
+                <?php if ($notifCount > 0): ?>
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                        <?= $notifCount ?>
+                        <span class="visually-hidden">unread messages</span>
+                    </span>
+                <?php endif; ?>
+
+            </a>
+            <!-- ======================= -->
+
             <span class="c2g-v-sep" aria-hidden="true"></span>
             <div class="c2g-user-meta">
                 <div class="c2g-user-name mb-1"><?= user()->full_name; ?></div>

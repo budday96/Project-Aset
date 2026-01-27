@@ -8,6 +8,8 @@ use CodeIgniter\HTTP\IncomingRequest;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 use Psr\Log\LoggerInterface;
+use App\Models\NotifikasiModel;
+
 
 /**
  * Class BaseController
@@ -51,8 +53,37 @@ abstract class BaseController extends Controller
         // Do Not Edit This Line
         parent::initController($request, $response, $logger);
 
+        $this->loadGlobalNotification();
+
         // Preload any models, libraries, etc, here.
 
         // E.g.: $this->session = service('session');
+    }
+
+    protected function loadGlobalNotification()
+    {
+        if (!function_exists('user') || !user()) {
+            return;
+        }
+
+        $notifModel = new NotifikasiModel();
+
+        $notifCount = $notifModel
+            ->where('id_user', user()->id)
+            ->where('is_read', 0)
+            ->countAllResults();
+
+        $notifList = $notifModel
+            ->where('id_user', user()->id)
+            ->where('is_read', 0)
+            ->orderBy('created_at', 'DESC')
+            ->limit(5)
+            ->find();
+
+
+        // Inject ke semua view secara global (cara resmi CI4)
+        $renderer = service('renderer');
+        $renderer->setVar('notifList', $notifList);
+        $renderer->setVar('notifCount', $notifCount);
     }
 }
