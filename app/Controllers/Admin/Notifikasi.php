@@ -16,16 +16,36 @@ class Notifikasi extends BaseController
 
     public function index()
     {
-        $items = $this->notifModel
-            ->where('id_user', user()->id)
-            ->orderBy('created_at', 'DESC')
+        $filter = $this->request->getGet('tipe'); // mutasi | expired | null
+
+        $builder = $this->notifModel
+            ->where('id_user', user()->id);
+
+        // filter tipe
+        if ($filter) {
+            $builder->where('tipe', $filter);
+        }
+
+        $items = $builder
+            ->orderBy('is_read', 'ASC')      // 🔴 unread dulu
+            ->orderBy('created_at', 'DESC')  // terbaru dulu
             ->findAll();
+
+        // hitung badge tabs
+        $countAll = $this->notifModel->where('id_user', user()->id)->countAllResults(false);
+        $countMutasi = $this->notifModel->where(['id_user' => user()->id, 'tipe' => 'mutasi'])->countAllResults(false);
+        $countExpired = $this->notifModel->where(['id_user' => user()->id, 'tipe' => 'expired'])->countAllResults(false);
 
         return view('admin/notifikasi/index', [
             'title' => 'Notifikasi',
-            'items' => $items
+            'items' => $items,
+            'filter' => $filter,
+            'countAll' => $countAll,
+            'countMutasi' => $countMutasi,
+            'countExpired' => $countExpired
         ]);
     }
+
 
     public function markAllRead()
     {
@@ -35,5 +55,21 @@ class Notifikasi extends BaseController
             ->update();
 
         return redirect()->back()->with('success', 'Semua notifikasi ditandai sudah dibaca.');
+    }
+
+    public function open($id)
+    {
+        $notif = $this->notifModel->find($id);
+
+        if (!$notif || $notif['id_user'] != user()->id) {
+            return redirect()->to('/admin/notifikasi');
+        }
+
+        // mark read
+        if (!$notif['is_read']) {
+            $this->notifModel->update($id, ['is_read' => 1]);
+        }
+
+        return redirect()->to($notif['url']);
     }
 }

@@ -344,44 +344,84 @@
                     </div>
                 </div>
 
-                <!-- Maintenance Reminder -->
+                <!-- Aset Akan Expired -->
                 <div class="col-md-6 mb-4">
                     <div class="card p-4 h-100">
-                        <h6 class="fw-bold mb-4">Maintenance Reminder</h6>
+
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6>Aset Akan Expired
+                                <span class="badge bg-danger"><?= count($expiredSoon) ?></span>
+                            </h6>
+
+                            <a href="<?= site_url('admin/aset') ?>" class="small text-decoration-none">
+                                Lihat Semua →
+                            </a>
+                        </div>
+
                         <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
+
+                            <table class="table table-sm table-hover align-middle">
+
+                                <thead class="table-light">
                                     <tr>
+                                        <th>Kode</th>
                                         <th>Nama Aset</th>
-                                        <th>Terakhir Servis</th>
-                                        <th>Jadwal Berikutnya</th>
-                                        <th>Sisa Hari</th>
+                                        <th>Tanggal Expired</th>
+                                        <th class="text-center">Sisa</th>
                                     </tr>
                                 </thead>
+
                                 <tbody>
-                                    <tr>
-                                        <td>AC Ruang Meeting</td>
-                                        <td>2024-09-10</td>
-                                        <td>2025-03-10</td>
-                                        <td><span class="badge bg-warning">28 Hari</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td>Genset Utama</td>
-                                        <td>2024-10-01</td>
-                                        <td>2025-04-01</td>
-                                        <td><span class="badge bg-danger">12 Hari</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td>Printer Epson</td>
-                                        <td>2024-12-20</td>
-                                        <td>2025-02-20</td>
-                                        <td><span class="badge bg-success">52 Hari</span></td>
-                                    </tr>
+
+                                    <?php if (!empty($expiredSoon)): ?>
+
+                                        <?php foreach ($expiredSoon as $a):
+                                            $days = ceil((strtotime($a['expired_at']) - time()) / 86400);
+
+                                            if ($days <= 7) {
+                                                $badge = 'danger';
+                                            } elseif ($days <= 14) {
+                                                $badge = 'warning';
+                                            } else {
+                                                $badge = 'success';
+                                            }
+                                        ?>
+
+                                            <tr onclick="window.location='<?= site_url('admin/aset/detail/') . $a['id_aset'] ?>'" style="cursor:pointer">
+
+                                                <td><strong><?= esc($a['kode_aset']) ?></strong></td>
+
+                                                <td><?= esc($a['nama_master']) ?></td>
+
+                                                <td><?= date('d M Y', strtotime($a['expired_at'])) ?></td>
+
+                                                <td class="text-center">
+                                                    <span class="badge bg-<?= $badge ?>">
+                                                        <?= $days ?> hari
+                                                    </span>
+                                                </td>
+                                            </tr>
+
+                                        <?php endforeach; ?>
+
+                                    <?php else: ?>
+
+                                        <tr>
+                                            <td colspan="4" class="text-center text-muted py-3">
+                                                Tidak ada aset yang akan expired
+                                            </td>
+                                        </tr>
+
+                                    <?php endif; ?>
+
                                 </tbody>
+
                             </table>
+
                         </div>
                     </div>
                 </div>
+
             </div>
         </div>
     </div>

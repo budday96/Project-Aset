@@ -276,6 +276,7 @@ $routes->group('admin', ['filter' => 'role:admin'], function ($routes) {
     // Notifikasi
     $routes->get('notifikasi', 'Admin\Notifikasi::index');
     $routes->get('notifikasi/read-all', 'Admin\Notifikasi::markAllRead');
+    $routes->get('notifikasi/open/(:num)', 'Admin\Notifikasi::open/$1');
 
 
 

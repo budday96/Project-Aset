@@ -46,4 +46,15 @@ class AsetModel extends Model
             ->join('kelompok_harta', 'kelompok_harta.id_kelompok_harta = aset.id_kelompok_harta', 'left')
             ->join('cabang', 'cabang.id_cabang = aset.id_cabang', 'left');
     }
+
+    public function getExpiredSoon(int $days = 30)
+    {
+        return $this->select('aset.*, master_aset.nama_master, cabang.nama_cabang')
+            ->join('master_aset', 'master_aset.id_master_aset = aset.id_master_aset', 'left')
+            ->join('cabang', 'cabang.id_cabang = aset.id_cabang', 'left')
+            ->where('expired_at IS NOT NULL', null, false)
+            ->where('expired_at >=', date('Y-m-d'))
+            ->where('expired_at <=', date('Y-m-d', strtotime("+{$days} days")))
+            ->findAll();
+    }
 }
