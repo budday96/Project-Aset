@@ -13,7 +13,7 @@
 
     <!-- DataTables Bootstrap 5 -->
     <!-- <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css"> -->
-    <link rel="stylesheet" href="<?= base_url(); ?>/vendor/datatables/css/dataTables.min.css">
+    <link rel="stylesheet" href="<?= base_url(); ?>/vendor/datatables/css/datatables.min.css">
     <!-- <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css"> -->
     <link rel="stylesheet" href="<?= base_url(); ?>/vendor/datatables/css/responsive.bootstrap5.min.css">
     <!-- DataTables Buttons -->
