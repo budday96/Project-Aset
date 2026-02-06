@@ -9,6 +9,7 @@ use App\Models\AsetModel;
 use App\Models\CabangModel;
 use App\Models\NotifikasiModel;
 use CodeIgniter\Exceptions\PageNotFoundException;
+use App\Services\NotificationService;
 
 class MutasiAset extends BaseController
 {
@@ -17,6 +18,7 @@ class MutasiAset extends BaseController
     protected $asetModel;
     protected $cabangModel;
     protected $notifModel;
+    protected $notificationService;
 
     public function __construct()
     {
@@ -25,6 +27,7 @@ class MutasiAset extends BaseController
         $this->asetModel    = new AsetModel();
         $this->cabangModel  = new CabangModel();
         $this->notifModel   = new NotifikasiModel();
+        $this->notificationService = new NotificationService();
     }
 
     /** Generate kode mutasi: MT-YYYYMMDD-0001 */
@@ -400,13 +403,14 @@ class MutasiAset extends BaseController
                 ->getResultArray();
 
             foreach ($usersTujuan as $u) {
-                $this->notifModel->insert([
-                    'id_user' => $u['id'],
-                    'tipe'    => 'mutasi',
-                    'judul'   => 'Mutasi Aset Masuk',
-                    'pesan'   => 'Mutasi ' . $mutasi['kode_mutasi'] . ' dari cabang ' . get_nama_cabang(user()->id_cabang) . ' telah dikirim.',
-                    'url'     => site_url('admin/mutasi/' . $id),
-                ]);
+                $this->notificationService->send(
+                    $u['id'],
+                    'mutasi',
+                    'Mutasi Aset Masuk',
+                    'Mutasi ' . $mutasi['kode_mutasi'] . ' dari cabang ' . get_nama_cabang(user()->id_cabang) . ' telah dikirim.',
+                    'admin/mutasi/' . $id,
+                    $id
+                );
             }
 
             $db->transComplete();
@@ -417,9 +421,6 @@ class MutasiAset extends BaseController
 
         return redirect()->back()->with('success', 'Mutasi dikirim & notifikasi berhasil dikirim.');
     }
-
-
-
 
     /** -----------------------------------------------------------
      *  BATAL
@@ -609,7 +610,7 @@ class MutasiAset extends BaseController
 
         $notifModel
             ->where('id_user', user()->id)
-            ->where('url', site_url('admin/mutasi/' . $id))
+            ->where('url', 'admin/mutasi/' . $id)
             ->set(['is_read' => 1])
             ->update();
 

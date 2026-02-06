@@ -5,18 +5,21 @@ namespace App\Services;
 use App\Models\AsetModel;
 use App\Models\NotifikasiModel;
 use Myth\Auth\Models\UserModel;
+use App\Services\NotificationService;
 
 class ExpiredNotifier
 {
     protected $asetModel;
     protected $notifModel;
     protected $userModel;
+    protected $notificationService;
 
     public function __construct()
     {
         $this->asetModel  = new AsetModel();
         $this->notifModel = new NotifikasiModel();
         $this->userModel  = new UserModel();
+        $this->notificationService = new NotificationService();
     }
 
     public function run(): void
@@ -56,13 +59,14 @@ class ExpiredNotifier
 
             foreach ($users as $u) {
 
-                $this->notifModel->insert([
-                    'id_user' => $u->id,
-                    'tipe'    => 'expired',
-                    'judul'   => 'Aset Akan Expired',
-                    'pesan'   => $a['kode_aset'] . ' akan expired dalam ' . $days . ' hari',
-                    'url'     => site_url('admin/aset/detail/' . $a['id_aset']),
-                ]);
+                $this->notificationService->send(
+                    $u->id,
+                    'expired',
+                    'Aset Akan Expired',
+                    $a['kode_aset'] . ' akan expired dalam ' . $days . ' hari',
+                    'admin/aset/detail/' . $a['id_aset'],
+                    $a['id_aset']
+                );
             }
         }
     }

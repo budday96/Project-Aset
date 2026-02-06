@@ -70,6 +70,16 @@ class Notifikasi extends BaseController
             $this->notifModel->update($id, ['is_read' => 1]);
         }
 
-        return redirect()->to($notif['url']);
+        switch ($notif['tipe']) {
+
+            case 'expired':
+                return redirect()->to(base_url('admin/aset/detail/' . $notif['ref_id']));
+
+            case 'mutasi':
+                return redirect()->to(base_url('admin/mutasi/' . $notif['ref_id']));
+
+            default:
+                return redirect()->to(base_url($notif['url']));
+        }
     }
 }
