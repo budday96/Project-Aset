@@ -5,6 +5,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title><?= esc($title ?? 'Detail Aset') ?></title>
+    <link rel="icon" type="image/png" href="<?= base_url(); ?>/img/logoipsum.png">
     <link rel="stylesheet" href="<?= base_url(); ?>vendor/bootstrap/css/bootstrap.min.css">
     <style>
         body {
