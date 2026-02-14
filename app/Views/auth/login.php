@@ -6,7 +6,7 @@
         <div class="card shadow-lg border-0 rounded-4">
             <div class="card-body p-5">
                 <div class="text-center mb-4">
-                    <h1 class="h3 fw-bold" style="color: #1a1817;"><?= lang('Auth.loginTitle') ?></h1>
+                    <h1 class="h3 fw-bold" style="color: #fd7e14;"><?= lang('Auth.loginTitle') ?></h1>
                 </div>
                 <?= view('Myth\Auth\Views\_message_block') ?>
                 <form action="<?= url_to('login') ?>" method="post" autocomplete="off">
