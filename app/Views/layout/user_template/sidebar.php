@@ -26,6 +26,30 @@
             </a>
         </li>
 
+        <!-- Aset -->
+        <li class="<?= is_active('user/aset*') ?>">
+            <a href="<?= base_url('user/aset'); ?>">
+                <i class="bi bi-box-seam"></i>
+                <span>Aset</span>
+            </a>
+        </li>
+
+        <!-- Pelaporan Aset -->
+        <li class="<?= is_active('user/laporan*') ?>">
+            <a href="<?= base_url('user/laporan'); ?>">
+                <i class="bi bi-file-earmark-text"></i>
+                <span>Pelaporan Aset</span>
+            </a>
+        </li>
+
+        <!-- Profile -->
+        <li class="<?= is_active('user/profile*') ?>">
+            <a href="<?= base_url('user/profile'); ?>">
+                <i class="bi bi-person-circle"></i>
+                <span>Profile</span>
+            </a>
+        </li>
+
         <!-- Logout -->
         <li>
             <a href="<?= base_url('logout'); ?>">

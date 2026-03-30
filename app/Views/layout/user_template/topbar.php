@@ -11,13 +11,34 @@
                 <i class="bi bi-arrows-fullscreen"></i>
             </button>
 
+            <!-- =======================
+     NOTIFICATION BELL (BOOTSTRAP 5 STYLE)
+======================== -->
+            <a href="<?= site_url('user/notifikasi'); ?>"
+                class="btn btn-light position-relative rounded-circle d-flex align-items-center justify-content-center"
+                style="width:38px;height:38px"
+                data-bs-toggle="tooltip"
+                title="Notifikasi">
+
+                <i class="bi bi-bell fs-5"></i>
+
+                <?php if ($notifCount > 0): ?>
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                        <?= $notifCount ?>
+                        <span class="visually-hidden">unread messages</span>
+                    </span>
+                <?php endif; ?>
+
+            </a>
+            <!-- ======================= -->
+
             <span class="c2g-v-sep" aria-hidden="true"></span>
             <div class="c2g-user-meta">
                 <div class="c2g-user-name mb-1"><?= user()->full_name; ?></div>
                 <div class="c2g-user-sub">
                     <span class="c2g-user-role badge bg-warning text-white px-2 py-1 rounded-pill">
-                        <i class="bi bi-shield-check me-1"></i>
-                        <?= get_user_role_name() ?>
+                        <i class="bi bi-geo-alt-fill"></i>
+                        <?= esc(get_nama_cabang(user()->id_cabang) ?? 'Tidak diketahui') ?>
                     </span>
                 </div>
             </div>

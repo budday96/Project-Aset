@@ -88,5 +88,5 @@ class Autoload extends AutoloadConfig
      *
      * @var list<string>
      */
-    public $helpers = ['menu', 'url', 'user_helper', 'mutasi_log'];
+    public $helpers = ['menu', 'url', 'user_helper', 'mutasi_log', 'status'];
 }

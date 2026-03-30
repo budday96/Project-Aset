@@ -78,6 +78,7 @@
         <?php
         $masterPatterns = [
             'admin/master-aset*',
+            'admin/vendor*',
             'admin/kategori*',
             'admin/subkategori*',
             'admin/atribut*',
@@ -104,6 +105,11 @@
                     <li class="<?= is_active('admin/master-aset*') ?>">
                         <a href="<?= base_url('admin/master-aset'); ?>">
                             <i class="bi bi-tag"></i>Nama Aset
+                        </a>
+                    </li>
+                    <li class="<?= is_active('admin/vendor*') ?>">
+                        <a href="<?= base_url('admin/vendor'); ?>">
+                            <i class="bi bi-shop"></i>Vendor
                         </a>
                     </li>
                     <li class="<?= is_active('admin/kategori*') ?>">
@@ -141,11 +147,11 @@
             </a>
         </li>
 
-        <!-- Mutasi Aset -->
-        <li class="<?= is_active('admin/penyusutan*') ?>">
-            <a href="<?= base_url('admin/penyusutan'); ?>">
-                <i class="bi bi-graph-down"></i>
-                <span>Penyusutan Aset</span>
+        <!-- Pelaporan Aset -->
+        <li class="<?= is_active('admin/laporan*') ?>">
+            <a href="<?= base_url('admin/laporan'); ?>">
+                <i class="bi bi-file-earmark-bar-graph"></i>
+                <span>Pelaporan Aset</span>
             </a>
         </li>
 

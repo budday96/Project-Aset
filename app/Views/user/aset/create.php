@@ -1,4 +1,4 @@
-<?= $this->extend('layout/admin_template/index'); ?>
+<?= $this->extend('layout/user_template/index'); ?>
 <?= $this->section('content'); ?>
 
 <div class="card">
@@ -20,7 +20,7 @@
         <?php endif; ?>
 
 
-        <form action="<?= base_url('admin/aset/store') ?>" method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+        <form action="<?= base_url('user/aset/store') ?>" method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
             <?= csrf_field() ?>
 
             <div class="row g-3">
@@ -87,18 +87,11 @@
                     <div class="invalid-feedback">Masukkan jumlah minimal 1.</div>
                 </div>
 
-                <div class="col-12 mt-3">
-                    <div class="form-check form-switch">
-                        <input
-                            class="form-check-input"
-                            type="checkbox"
-                            role="switch"
-                            name="merge_if_exists"
-                            id="merge_if_exists"
-                            value="1"
-                            <?= old('merge_if_exists') ? 'checked' : '' ?>>
-                        <label class="form-check-label fw-semibold" for="merge_if_exists">
-                            Tambah stok jika aset sudah ada di cabang
+                <div class="col-12">
+                    <div class="form-check mt-2">
+                        <input class="form-check-input" type="checkbox" name="merge_if_exists" id="merge_if_exists" value="1" <?= old('merge_if_exists', '1') ? 'checked' : '' ?>>
+                        <label class="form-check-label" for="merge_if_exists">
+                            Tambah stok jika aset master ini sudah ada di cabang ini.
                         </label>
                     </div>
                 </div>
@@ -153,7 +146,7 @@
             <div class="mt-3">
                 <button type="submit" class="btn btn-primary me-2">Simpan</button>
                 <button type="reset" class="btn btn-danger me-2">Reset</button>
-                <a href="<?= base_url('admin/aset') ?>" class="btn btn-secondary">Kembali</a>
+                <a href="<?= base_url('user/aset') ?>" class="btn btn-secondary">Kembali</a>
             </div>
         </form>
     </div>
@@ -268,7 +261,7 @@
             dropdownParent: $('#master_aset').parent(),
             placeholder: '-- Pilih Nama Aset --',
             ajax: {
-                url: `${BASE}/admin/aset/getMasterAset`,
+                url: `${BASE}/user/aset/getMasterAset`,
                 dataType: 'json',
                 delay: 250,
                 processResults: data => ({
@@ -282,7 +275,7 @@
             const id = $(this).val();
             if (!id) return;
 
-            $.getJSON(`${BASE}/admin/aset/ajaxMasterDetail/${id}`, data => {
+            $.getJSON(`${BASE}/user/aset/ajaxMasterDetail/${id}`, data => {
                 if (!data.ok) {
                     alert('Master tidak ditemukan');
                     return;
@@ -399,7 +392,7 @@
             $sub.empty().append('<option value="">Memuat...</option>').trigger('change');
             if (!idKat) return;
             $.ajax({
-                url: `${BASE}/admin/master-aset/subkategori/${idKat}`,
+                url: `${BASE}/user/master-aset/subkategori/${idKat}`,
                 dataType: 'json',
                 success: function(res) {
                     $sub.empty().append('<option value="">-- Pilih Subkategori --</option>');
@@ -440,7 +433,7 @@
     `);
 
             try {
-                const res = await fetch(`${BASE}/admin/master-aset/quick-store`, {
+                const res = await fetch(`${BASE}/user/master-aset/quick-store`, {
                     method: 'POST',
                     headers: {
                         'Accept': 'application/json',

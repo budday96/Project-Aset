@@ -235,12 +235,6 @@
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
-                        <?php else: ?>
-                            <tr>
-                                <td colspan="7" class="text-center text-muted py-3">
-                                    Belum ada data mutasi.
-                                </td>
-                            </tr>
                         <?php endif; ?>
                     </tbody>
                 </table>

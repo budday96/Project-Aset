@@ -259,6 +259,23 @@ $routes->group('admin', ['filter' => 'role:admin'], function ($routes) {
     $routes->get('master-aset/subkategori/(:num)', 'Admin\MasterAset::ajaxSubkategori/$1');   // GET list subkategori by kategori
     $routes->post('master-aset/quick-store', 'Admin\MasterAset::quickStore');                  // POST create master cepat (AJAX)
 
+    $routes->get('laporan', 'Admin\LaporanAset::index');
+    $routes->get('laporan/(:num)', 'Admin\LaporanAset::detail/$1');
+    $routes->post('laporan/approve/(:num)', 'Admin\LaporanAset::approve/$1');
+    $routes->post('laporan/reject/(:num)', 'Admin\LaporanAset::reject/$1');
+    $routes->get('laporan/assign/(:num)', 'Admin\LaporanAset::assignForm/$1');
+    $routes->post('laporan/assign/(:num)', 'Admin\LaporanAset::assign/$1');
+    $routes->get('laporan/progress/(:num)', 'Admin\LaporanAset::progressForm/$1');
+    $routes->post('laporan/progress/(:num)', 'Admin\LaporanAset::updateProgress/$1');
+
+    $routes->get('vendor', 'Admin\Vendor::index');
+    $routes->get('vendor/create', 'Admin\Vendor::create');
+    $routes->post('vendor/store', 'Admin\Vendor::store');
+    $routes->get('vendor/edit/(:num)', 'Admin\Vendor::edit/$1');
+    $routes->post('vendor/update/(:num)', 'Admin\Vendor::update/$1');
+    $routes->get('vendor/toggle/(:num)', 'Admin\Vendor::toggle/$1');
+
+
     // Mutasi Aset
     $routes->get('mutasi',              'Admin\MutasiAset::index');
     $routes->get('mutasi/create',       'Admin\MutasiAset::create');
@@ -298,6 +315,134 @@ $routes->group('admin', ['filter' => 'role:admin'], function ($routes) {
 });
 
 $routes->group('user', ['filter' => 'role:user'], function ($routes) {
+
     // Dashboard
     $routes->get('dashboard', 'User\Dashboard::index');
+
+    // Kelola Aset
+    $routes->get('aset', 'User\Aset::index');
+    $routes->get('aset/create', 'User\Aset::create');
+    $routes->post('aset/store', 'User\Aset::store');
+    $routes->get('aset/edit', 'User\Aset::edit');
+    $routes->get('aset/detail', 'User\Aset::detail');
+    $routes->get('aset/edit/(:num)', 'User\Aset::edit/$1');
+    $routes->post('aset/update/(:num)', 'User\Aset::update/$1');
+    $routes->get('aset/detail/(:num)', 'User\Aset::detail/$1');
+    $routes->post('aset/delete/(:num)', 'User\Aset::delete/$1');
+
+    // Kategori Aset
+    $routes->get('kategori', 'User\KategoriAset::index');
+    $routes->get('kategori/trash', 'User\KategoriAset::trash');
+    $routes->get('kategori/create', 'User\KategoriAset::create');
+    $routes->post('kategori/store', 'User\KategoriAset::store');
+    $routes->get('kategori/edit/(:num)', 'User\KategoriAset::edit/$1');
+    $routes->post('kategori/update/(:num)', 'User\KategoriAset::update/$1');
+    $routes->post('kategori/delete/(:num)', 'User\KategoriAset::delete/$1');
+    $routes->get('kategori/restore/(:num)', 'User\KategoriAset::restore/$1');
+
+    // AJAX
+    $routes->get('subkategori/by-kategori/(:num)', 'User\AsetAjax::subkategoriByKategori/$1');
+    $routes->get('atribut/by-subkategori/(:num)',  'User\AsetAjax::atributBySubkategori/$1');
+
+    // CRUD Subkategori
+    $routes->get('subkategori',                'User\Subkategori::index');
+    $routes->get('subkategori/trash',          'User\Subkategori::trash');
+    $routes->get('subkategori/create',         'User\Subkategori::create');
+    $routes->post('subkategori/store',         'User\Subkategori::store');
+    $routes->get('subkategori/(:num)/edit',    'User\Subkategori::edit/$1');
+    $routes->post('subkategori/(:num)/update', 'User\Subkategori::update/$1');
+    $routes->post('subkategori/(:num)/delete', 'User\Subkategori::delete/$1');
+    $routes->get('subkategori/restore/(:num)', 'User\Subkategori::restore/$1');
+    $routes->get('subkategori/purge/(:num)',   'User\Subkategori::purge/$1');
+
+    // CRUD Atribut
+    $routes->get('atribut/(:num)',         'User\Atribut::index/$1');   // $1=id_subkategori
+    $routes->get('atribut/(:num)/create',  'User\Atribut::create/$1');
+    $routes->post('atribut/store',         'User\Atribut::store');
+    $routes->get('atribut/edit/(:num)',    'User\Atribut::edit/$1');    // $1=id_atribut
+    $routes->post('atribut/update/(:num)', 'User\Atribut::update/$1');
+    $routes->post('atribut/delete/(:num)', 'User\Atribut::delete/$1');
+
+    // Master Aset
+    $routes->get('master-aset',                 'User\MasterAset::index');
+    $routes->get('master-aset/trash',           'User\MasterAset::trash');
+    $routes->get('master-aset/create',          'User\MasterAset::create');
+    $routes->post('master-aset/store',          'User\MasterAset::store');
+    $routes->get('master-aset/detail/(:num)',   'User\MasterAset::detail/$1');
+    $routes->get('master-aset/edit/(:num)',     'User\MasterAset::edit/$1');
+    $routes->post('master-aset/update/(:num)',  'User\MasterAset::update/$1');
+    $routes->post('master-aset/delete/(:num)',  'User\MasterAset::delete/$1');
+
+    $routes->post('master-aset/restore/(:num)', 'User\MasterAset::restore/$1');
+    $routes->post('master-aset/purge/(:num)',   'User\MasterAset::purge/$1');
+
+    // AJAX Master-Detail Aset
+    $routes->get('aset/ajaxMasterDetail/(:num)', 'User\Aset::ajaxMasterDetail/$1');
+
+    $routes->get('aset/getMasterAset', 'User\Aset::getMasterAset');
+    $routes->get('aset/detailMaster/(:num)', 'User\Aset::detailMaster/$1');
+
+    // Kelola Aset
+    $routes->get('aset', 'User\Aset::index');
+    $routes->get('aset/create', 'User\Aset::create');
+    $routes->post('aset/store', 'User\Aset::store');
+    $routes->get('aset/edit/(:num)', 'User\Aset::edit/$1');
+    $routes->post('aset/update/(:num)', 'User\Aset::update/$1');
+    $routes->get('aset/detail/(:num)', 'User\Aset::detail/$1');
+    $routes->post('aset/delete/(:num)', 'User\Aset::delete/$1');
+
+    // Master Aset Pintasan
+    $routes->get('master-aset/subkategori/(:num)', 'User\MasterAset::ajaxSubkategori/$1');   // GET list subkategori by kategori
+    $routes->post('master-aset/quick-store', 'User\MasterAset::quickStore');                  // POST create master cepat (AJAX)
+
+
+    // Laporan Aset
+    $routes->get('laporan', 'User\LaporanAset::index');
+    $routes->get('laporan/create', 'User\LaporanAset::create');
+    $routes->post('laporan/store', 'User\LaporanAset::store');
+    $routes->get('laporan/detail/(:num)', 'User\LaporanAset::detail/$1');
+
+
+    $routes->post('laporan/confirm/(:num)', 'User\LaporanAset::confirm/$1');
+
+    $routes->get('laporan/aset/(:num)', 'User\LaporanAset::getAsetDetail/$1');
+
+
+
+    // Mutasi Aset
+    $routes->get('mutasi',              'User\MutasiAset::index');
+    $routes->get('mutasi/create',       'User\MutasiAset::create');
+    $routes->post('mutasi/store',       'User\MutasiAset::store');
+    $routes->get('mutasi/edit/(:num)', 'User\MutasiAset::edit/$1');
+    $routes->post('mutasi/update/(:num)', 'User\MutasiAset::update/$1');
+    $routes->get('mutasi/(:num)',       'User\MutasiAset::show/$1');
+    $routes->post('mutasi/kirim-header/(:num)', 'User\MutasiAset::kirimHeader/$1');
+    $routes->post('mutasi/batal-header/(:num)', 'User\MutasiAset::batalHeader/$1');
+    $routes->post('mutasi/terima-header/(:num)', 'User\MutasiAset::terimaHeader/$1');
+
+    // Surat Jalan Mutasi Aset
+    $routes->get('mutasi/surat-jalan/(:num)', 'User\MutasiAset::suratJalan/$1');
+
+    // Notifikasi
+    $routes->get('notifikasi', 'User\Notifikasi::index');
+    $routes->get('notifikasi/read-all', 'User\Notifikasi::markAllRead');
+    $routes->get('notifikasi/open/(:num)', 'User\Notifikasi::open/$1');
+
+
+
+    // Profile
+    $routes->get('profile', 'User\Profile::index');
+    $routes->post('profile/update', 'User\Profile::update');
+
+    // User Management
+
+    // User Management - User Cabang
+    $routes->get('user', 'User\UserManagement::index');
+    $routes->get('user/create', 'User\UserManagement::create');
+    $routes->post('user/store', 'User\UserManagement::store');
+    $routes->get('user/edit/(:num)', 'User\UserManagement::edit/$1');
+    $routes->get('user/detail/(:num)', 'User\UserManagement::detail/$1');
+    $routes->post('user/update/(:num)', 'User\UserManagement::update/$1');
+    $routes->post('user/delete/(:num)', 'User\UserManagement::delete/$1');
+    $routes->post('user/toggle/(:num)', 'User\UserManagement::toggleActive/$1');
 });
